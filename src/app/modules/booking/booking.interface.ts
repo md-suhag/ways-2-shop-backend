@@ -13,6 +13,14 @@ export enum IPaymentType  {
 ONLINE="ONLINE",
 COD = "COD"
 }
+export interface ILocation{
+  locationName :string;
+  coordinates:ICoordinates
+}
+ export interface ICoordinates {
+    lat: number;
+    lng: number;
+}
 
 export interface IBooking {
   service:Types.ObjectId;
@@ -24,7 +32,7 @@ export interface IBooking {
   txId:string;
   bookingId:string;
   price:number;
-  location:string;
+  location:ILocation;
   images:string[],
   note:string;
   bookingDate:Date;
