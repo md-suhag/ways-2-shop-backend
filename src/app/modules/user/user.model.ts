@@ -1,54 +1,72 @@
 import { model, Schema } from "mongoose";
 import { USER_ROLES } from "../../../enums/user";
-import { IUser, UserModal } from "./user.interface";
+import { IAuthProvider, IsActive, IUser, UserModal } from "./user.interface";
 import bcrypt from "bcrypt";
 import ApiError from "../../../errors/ApiErrors";
 import { StatusCodes } from "http-status-codes";
 import config from "../../../config";
 
+const authProviderSchema = new Schema<IAuthProvider>(
+  {
+    provider: { type: String, required: true },
+    providerId: { type: String, required: true },
+  },
+  {
+    versionKey: false,
+    _id: false,
+  }
+);
 const userSchema = new Schema<IUser, UserModal>(
     {
         name: {
             type: String,
-            required: false,
+            required: true,
         },
-        appId: {
+        email: {
             type: String,
-            required: false,
+            unique: true,
+            lowercase: true,
+        },
+        password: {
+            type: String,
+            required: true,
+            select: 0,
+            minlength: 8,
+        },
+        contact: {
+            type: String,
+
+        },
+        location: {
+            type: String,
+          
         },
         role: {
             type: String,
             enum: Object.values(USER_ROLES),
             required: true,
         },
-        email: {
-            type: String,
-            required: false,
-            unique: true,
-            lowercase: true,
-        },
-        contact: {
-            type: String,
-            required: false,
-        },
-        password: {
-            type: String,
-            required: false,
-            select: 0,
-            minlength: 8,
-        },
-        location: {
-            type: String,
-            required: false,
-        },
         profile: {
             type: String,
             default: 'https://res.cloudinary.com/dzo4husae/image/upload/v1733459922/zfyfbvwgfgshmahyvfyk.png',
         },
-        verified: {
+        bussinessCategory:{
+            type:String
+        },
+        isActive:{
+            type:String,
+            enum:Object.values(IsActive),
+            default:IsActive.ACTIVE
+        },
+        isVerified: {
             type: Boolean,
             default: false,
         },
+        isDeleted: {
+            type: Boolean,
+            default: false,
+        },
+        authProviders:[authProviderSchema],
         authentication: {
             type: {
                 isResetPassword: {

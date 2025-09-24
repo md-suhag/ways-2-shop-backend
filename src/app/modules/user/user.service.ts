@@ -1,4 +1,3 @@
-import { USER_ROLES } from "../../../enums/user";
 import { IUser } from "./user.interface";
 import { JwtPayload } from 'jsonwebtoken';
 import { User } from "./user.model";
@@ -9,7 +8,7 @@ import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
 import unlinkFile from "../../../shared/unlinkFile";
 
-const createAdminToDB = async (payload: any): Promise<IUser> => {
+const createAdminToDB = async (payload:Partial<IUser>): Promise<IUser> => {
 
     // check admin is exist or not;
     const isExistAdmin = await User.findOne({ email: payload.email })
@@ -40,7 +39,7 @@ const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
     const values = {
         name: createUser.name,
         otp: otp,
-        email: createUser.email!
+        email: createUser.email
     };
 
     const createAccountTemplate = emailTemplate.createAccount(values);
@@ -62,7 +61,7 @@ const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
 
 const getUserProfileFromDB = async (user: JwtPayload): Promise<Partial<IUser>> => {
     const { id } = user;
-    const isExistUser: any = await User.isExistUserById(id);
+    const isExistUser = await User.isExistUserById(id);
     if (!isExistUser) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }

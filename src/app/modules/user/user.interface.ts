@@ -1,4 +1,5 @@
-import { Model, Types } from 'mongoose';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Model } from 'mongoose';
 import { USER_ROLES } from '../../../enums/user';
 
 interface IStripeAccountInfo {
@@ -13,17 +14,30 @@ interface IAuthenticationProps {
     oneTimeCode: number;
     expireAt: Date;
 }
+export interface IAuthProvider {
+   provider:string;
+   providerId:string
+}
+
+export enum IsActive {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  BLOCKED = "BLOCKED",
+}
 
 export interface IUser {
     name: string;
-    appId: string;
-    role: USER_ROLES;
-    contact: string;
     email: string;
     password: string;
-    location: string;
-    profile: string;
-    verified: boolean;
+    role: USER_ROLES;
+    contact?: string;
+    location?: string;
+    profile?: string;
+    bussinessCategory?:string;
+    isVerified?: boolean;
+    isDeleted:boolean;
+    isActive:IsActive;
+    authProviders:IAuthProvider[];
     authentication?: IAuthenticationProps;
     accountInformation?: IStripeAccountInfo;
 }
