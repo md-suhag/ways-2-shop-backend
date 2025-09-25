@@ -246,12 +246,10 @@ const newAccessTokenToUser = async(token: string)=>{
 }
   
 const resendVerificationEmailToDB = async (email:string) => {
-  
-    // Find the user by ID
-    const existingUser:any = await User.findOne({email:email}).lean();
+    const existingUser = await User.findOne({email:email}).lean();
   
     if (!existingUser) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User with this email does not exist!',);
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User with this email does not exist!');
     }
   
     if (existingUser?.isVerified) {
@@ -261,7 +259,7 @@ const resendVerificationEmailToDB = async (email:string) => {
     // Generate OTP and prepare email
     const otp = generateOTP();
     const emailValues = {
-        name: existingUser.firstName,
+        name: existingUser.name,
         otp,
         email: existingUser.email,
     };

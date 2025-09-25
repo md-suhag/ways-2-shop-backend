@@ -24,10 +24,6 @@ router.post(
     AuthController.newAccessToken
 );
 
-router.post(
-    '/resend-otp',
-    AuthController.resendVerificationEmail
-);
 
 router.post(
     '/verify-email',
@@ -63,6 +59,7 @@ router.post(
 
 router.post(
     '/resend-otp',
+    validateRequest(AuthValidation.resendOtpZodSchema),
     AuthController.resendVerificationEmail
 );
 

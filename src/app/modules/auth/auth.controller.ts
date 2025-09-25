@@ -87,7 +87,7 @@ const resendVerificationEmail = catchAsync(async (req: Request, res: Response) =
     sendResponse(res, {
         success: true,
         statusCode: StatusCodes.OK,
-        message: 'Generate OTP and send successfully',
+        message: 'OTP Generate and send successfull',
         data: result
     });
 });
