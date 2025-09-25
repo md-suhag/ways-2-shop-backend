@@ -7,6 +7,7 @@ export interface IResetToken {
 }
 
 export type ResetTokenModel = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     isExistToken(token: string): any;
     isExpireToken(token: string): boolean;
 } & Model<IResetToken>;
