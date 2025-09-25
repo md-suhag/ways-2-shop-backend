@@ -194,7 +194,7 @@ const changePasswordToDB = async ( user: JwtPayload, payload: IChangePassword) =
   
     //current password match
     if ( currentPassword && !(await User.isMatchPassword(currentPassword, isExistUser.password))) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, 'Password is incorrect');
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Current password is incorrect');
     }
   
     //newPassword and current password

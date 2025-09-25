@@ -34,10 +34,10 @@ const createChangePasswordZodSchema = z.object({
         currentPassword: z.string({
             required_error: 'Current Password is required',
         }),
-        newPassword: z.string({ required_error: 'New Password is required' }),
+        newPassword: z.string({ required_error: 'New Password is required' }).min(8,{message:"Minimum password length must be atleast 8"}),
         confirmPassword: z.string({
             required_error: 'Confirm Password is required',
-        })
+        }).min(8,{message:"Minimum password length must be atleast 8"}),
     })
 });
 const resendOtpZodSchema = z.object({
