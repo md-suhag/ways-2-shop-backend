@@ -109,12 +109,12 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
     let message;
     let data;
   
-    if (!isExistUser.verified) {
+    if (!isExistUser.isVerified) {
         await User.findOneAndUpdate(
             { _id: isExistUser._id },
-            { verified: true, authentication: { oneTimeCode: null, expireAt: null } }
+            { isVerified: true, authentication: { oneTimeCode: null, expireAt: null } }
         );
-        message = 'Email verify successfully';
+        message = 'Email verified successfully';
     } else {
         await User.findOneAndUpdate(
             { _id: isExistUser._id },
