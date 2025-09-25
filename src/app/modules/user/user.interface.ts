@@ -35,8 +35,8 @@ export interface IUser {
     profile?: string;
     bussinessCategory?:string;
     isVerified?: boolean;
-    isDeleted:boolean;
     isActive:IsActive;
+    isDeleted?:boolean;
     authProviders:IAuthProvider[];
     authentication?: IAuthenticationProps;
     accountInformation?: IStripeAccountInfo;

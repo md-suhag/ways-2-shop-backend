@@ -1,5 +1,7 @@
 import path from 'path';
 import DailyRotateFile from 'winston-daily-rotate-file';
+import config from '../config';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, label, printf } = format;
 
@@ -22,7 +24,7 @@ const myFormat = printf(({level, message, label, timestamp }: IMessageProps) => 
 
 const logger = createLogger({
     level: 'info',
-    format: combine(label({ label: 'PROJECT_NAME' }), timestamp(), myFormat),
+    format: combine(label({ label: config.server_name }), timestamp(), myFormat),
     transports: [
         new transports.Console(),
         new DailyRotateFile({

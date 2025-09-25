@@ -7,7 +7,8 @@ import { errorLogger } from '../../shared/logger';
 import { IErrorMessage } from '../../types/errors.types';
 import { StatusCodes } from 'http-status-codes';
 
-const globalErrorHandler: ErrorRequestHandler = (error, req, res) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const globalErrorHandler: ErrorRequestHandler = (error, req, res,next) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     config.node_env === 'development'
     ? console.log('🚨 globalErrorHandler', error)

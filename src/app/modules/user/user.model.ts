@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { model, Query, Schema } from "mongoose";
 import { USER_ROLES } from "../../../enums/user";
 import { IAuthProvider, IsActive, IUser, UserModal } from "./user.interface";
 import bcrypt from "bcrypt";
@@ -129,6 +129,13 @@ userSchema.statics.isMatchPassword = async ( password: string, hashPassword: str
     return await bcrypt.compare(password, hashPassword);
 };
   
+userSchema.pre(/^find/, function (next) {
+  if (this instanceof Query) {
+    this.where({ isDeleted: false });
+  }
+  next();
+});
+
 //check user
 userSchema.pre('save', async function (next) {
     //check user

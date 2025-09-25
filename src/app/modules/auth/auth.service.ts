@@ -16,20 +16,24 @@ import cryptoToken from '../../../util/cryptoToken';
 import generateOTP from '../../../util/generateOTP';
 import { ResetToken } from '../resetToken/resetToken.model';
 import { User } from '../user/user.model';
-import { IUser } from '../user/user.interface';
+import { IsActive } from '../user/user.interface';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
 
     const { email, password } = payload;
-    const isExistUser:any = await User.findOne({ email }).select('+password');
+    const isExistUser = await User.findOne({ email }).select('+password');
     if (!isExistUser) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }
   
     //check verified and status
-    if (!isExistUser.verified) {
+    if (!isExistUser.isVerified) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Please verify your account, then try to login again');
+    }
+
+    if (isExistUser.isActive !== IsActive.ACTIVE) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'This account is not active');
     }
   
     //check match password
