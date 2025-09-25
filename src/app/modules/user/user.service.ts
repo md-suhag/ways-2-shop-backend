@@ -28,13 +28,19 @@ const createAdminToDB = async (payload:Partial<IUser>): Promise<IUser> => {
 }
 
 const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
-
     const isUserExist = await User.findOne({email :payload.email})
-    console.log(isUserExist)
+
     if(isUserExist){
          throw new ApiError(StatusCodes.BAD_REQUEST, 'User Already Exist');
     }
 
+    payload = {
+        ...payload,
+        authProviders:[{
+            provider:"credentials",
+            providerId:payload.email? payload.email:""
+        }]
+    }
     const createUser = await User.create(payload);
     if (!createUser) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create user');

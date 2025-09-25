@@ -33,7 +33,7 @@ export interface IUser {
     contact?: string;
     location?: string;
     profile?: string;
-    bussinessCategory?:string;
+    businessCategory?:string[];
     isVerified?: boolean;
     isActive:IsActive;
     isDeleted?:boolean;

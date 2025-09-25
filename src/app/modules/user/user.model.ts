@@ -50,9 +50,9 @@ const userSchema = new Schema<IUser, UserModal>(
             type: String,
             default: 'https://res.cloudinary.com/dzo4husae/image/upload/v1733459922/zfyfbvwgfgshmahyvfyk.png',
         },
-        bussinessCategory:{
+        businessCategory:[{
             type:String
-        },
+        }],
         isActive:{
             type:String,
             enum:Object.values(IsActive),

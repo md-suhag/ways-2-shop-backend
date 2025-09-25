@@ -15,7 +15,8 @@ const createUserZodSchema = z.object({
         email: z.string({ required_error: 'Email is required' }).email({ message: 'Invalid email address' }),
         password: z.string({ required_error: 'Password is required' }).min(8,{message:"Password length should be minimum 8"}),
         contact:z.string({required_error:"Contact is required"}),
-        role: z.enum([USER_ROLES.CUSTOMER,USER_ROLES.PROVIDER])
+        role: z.enum([USER_ROLES.CUSTOMER,USER_ROLES.PROVIDER]),
+        businessCategory: z.array(z.string()).optional()
     })
 });
 
