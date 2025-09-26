@@ -4,12 +4,8 @@ import { User } from '../app/modules/user/user.model';
 import config from '../config';
 import { USER_ROLES } from '../enums/user';
 import { logger } from '../shared/logger';
-import { IAuthProvider, IUser } from '../app/modules/user/user.interface';
+import { IUser } from '../app/modules/user/user.interface';
 
-  const authProvider: IAuthProvider = {
-      provider: "credentials",
-      providerId: config.super_admin.email!
-    };
 
 const superUser:Partial<IUser> = {
     name: 'Super Admin',
@@ -17,7 +13,6 @@ const superUser:Partial<IUser> = {
     email: config.super_admin.email,
     password: config.super_admin.password,
     isVerified: true,
-    authProviders:[authProvider]
 };
 
 const seedSuperAdmin = async () => {

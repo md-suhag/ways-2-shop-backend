@@ -7,9 +7,11 @@ export default{
     ip_address: process.env.IP,
     port: process.env.PORT,
     port_dev: process.env.PORT_DEV,
+    frontend_url: process.env.FRONTEND_URL,
     database_url: process.env.DATABASE_URL,
     node_env: process.env.NODE_ENV,
     bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS,
+    express_session_secret:process.env.EXPRESS_SESSION_SECRET,
     jwt: {
         jwt_secret: process.env.JWT_SECRET,
         jwt_expire_in: process.env.JWT_EXPIRE_IN,
@@ -30,9 +32,9 @@ export default{
     },
     social: {
         google_client_id: process.env.GOOGLE_CLIENT_ID,
-        facebook_client_id: process.env.FACEBOOK_CLIENT_ID,
         google_client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        facebook_client_secret: process.env.FACEBOOK_CLIENT_SECRET
+        google_callback_url: process.env.GOOGLE_CALLBACK_URL,
+       
     },
     super_admin: {
         email:process.env.SUPER_ADMIN_EMAIL,

@@ -16,7 +16,7 @@ import cryptoToken from '../../../util/cryptoToken';
 import generateOTP from '../../../util/generateOTP';
 import { ResetToken } from '../resetToken/resetToken.model';
 import { User } from '../user/user.model';
-import { IsActive } from '../user/user.interface';
+import { IsActive, IUser } from '../user/user.interface';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -35,9 +35,15 @@ const loginUserFromDB = async (payload: ILoginData) => {
     if (isExistUser.isActive !== IsActive.ACTIVE) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'This account is not active');
     }
-  
+  if(!isExistUser.password && isExistUser.appId){
+    
+        throw new ApiError(StatusCodes.BAD_REQUEST, "please  use continue with google, because you logged in with google previously")
+
+    
+  }
     //check match password
-    if ( password && !(await User.isMatchPassword(password, isExistUser.password))) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    if ( password && !(await User.isMatchPassword(password, isExistUser.password!))) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Password is incorrect!');
     }
   
@@ -193,7 +199,7 @@ const changePasswordToDB = async ( user: JwtPayload, payload: IChangePassword) =
     }
   
     //current password match
-    if ( currentPassword && !(await User.isMatchPassword(currentPassword, isExistUser.password))) {
+    if ( currentPassword && !(await User.isMatchPassword(currentPassword, isExistUser.password? isExistUser.password:""))) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Current password is incorrect');
     }
   
@@ -283,54 +289,60 @@ const resendVerificationEmailToDB = async (email:string) => {
 };
 
 // social authentication
-// const socialLoginFromDB = async (payload: IUser) => {
+const socialLoginFromDB = async (payload: IUser) => {
 
-//     const { appId, role } = payload;
+    const { appId, role } = payload;
 
-//     const isExistUser = await User.findOne({ appId });
+    const isExistUser = await User.findOne({ appId });
 
-//     if (isExistUser) {
+    if (isExistUser) {
+    //check user status
+    if (isExistUser.isActive !== IsActive.ACTIVE) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Your account is not active. Please contact the admin'
+      );
+    }
+        //create token
+        const accessToken = jwtHelper.createToken(
+            { id: isExistUser._id, role: isExistUser.role },
+            config.jwt.jwt_secret as Secret,
+            config.jwt.jwt_expire_in as string
+        );
 
-//         //create token
-//         const accessToken = jwtHelper.createToken(
-//             { id: isExistUser._id, role: isExistUser.role },
-//             config.jwt.jwt_secret as Secret,
-//             config.jwt.jwt_expire_in as string
-//         );
+        //create token
+        const refreshToken = jwtHelper.createToken(
+            { id: isExistUser._id, role: isExistUser.role },
+            config.jwt.jwtRefreshSecret as Secret,
+            config.jwt.jwtRefreshExpiresIn as string
+        );
 
-//         //create token
-//         const refreshToken = jwtHelper.createToken(
-//             { id: isExistUser._id, role: isExistUser.role },
-//             config.jwt.jwtRefreshSecret as Secret,
-//             config.jwt.jwtRefreshExpiresIn as string
-//         );
+        return { accessToken, refreshToken };
 
-//         return { accessToken, refreshToken };
+    } else {
 
-//     } else {
+        const user = await User.create({ appId, role, isVerified: true });
+        if (!user) {
+            throw new ApiError(StatusCodes.BAD_REQUEST, "Failed to created User")
+        }
 
-//         const user = await User.create({ appId, role, verified: true });
-//         if (!user) {
-//             throw new ApiError(StatusCodes.BAD_REQUEST, "Failed to created User")
-//         }
+        //create token
+        const accessToken = jwtHelper.createToken(
+            { id: user._id, role: user.role },
+            config.jwt.jwt_secret as Secret,
+            config.jwt.jwt_expire_in as string
+        );
 
-//         //create token
-//         const accessToken = jwtHelper.createToken(
-//             { id: user._id, role: user.role },
-//             config.jwt.jwt_secret as Secret,
-//             config.jwt.jwt_expire_in as string
-//         );
+        //create token
+        const refreshToken = jwtHelper.createToken(
+            { id: user._id, role: user.role },
+            config.jwt.jwtRefreshSecret as Secret,
+            config.jwt.jwtRefreshExpiresIn as string
+        );
 
-//         //create token
-//         const refreshToken = jwtHelper.createToken(
-//             { id: user._id, role: user.role },
-//             config.jwt.jwtRefreshSecret as Secret,
-//             config.jwt.jwtRefreshExpiresIn as string
-//         );
-
-//         return { accessToken, refreshToken };
-//     }
-// }
+        return { accessToken, refreshToken };
+    }
+}
 
 // delete user
 // delete user
@@ -361,6 +373,6 @@ export const AuthService = {
     changePasswordToDB,
     newAccessTokenToUser,
     resendVerificationEmailToDB,
-    // socialLoginFromDB,
+    socialLoginFromDB,
     deleteUserFromDB
 };

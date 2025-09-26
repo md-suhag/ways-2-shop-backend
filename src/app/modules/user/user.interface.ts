@@ -14,10 +14,7 @@ interface IAuthenticationProps {
     oneTimeCode: number;
     expireAt: Date;
 }
-export interface IAuthProvider {
-   provider:string;
-   providerId:string
-}
+
 
 export enum IsActive {
   ACTIVE = "ACTIVE",
@@ -28,7 +25,7 @@ export enum IsActive {
 export interface IUser {
     name: string;
     email: string;
-    password: string;
+    password?: string;
     role: USER_ROLES;
     contact?: string;
     location?: string;
@@ -37,7 +34,8 @@ export interface IUser {
     isVerified?: boolean;
     isActive:IsActive;
     isDeleted?:boolean;
-    authProviders:IAuthProvider[];
+    isOnline?:boolean;
+    appId?:string;
     authentication?: IAuthenticationProps;
     accountInformation?: IStripeAccountInfo;
 }

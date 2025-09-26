@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { USER_ROLES } from '../../../enums/user';
 
 const createVerifyEmailZodSchema = z.object({
     body: z.object({
@@ -46,6 +47,15 @@ const resendOtpZodSchema = z.object({
     })
 });
 
+// social login schema
+const createSocialLoginZodSchema = z.object({
+  body: z.object({
+    appId: z
+      .string({ required_error: 'App ID is required' })
+      .nonempty('App ID cannot be empty'),
+    role:z.enum([USER_ROLES.CUSTOMER,USER_ROLES.PROVIDER])
+  }),
+});
 
 
 export const AuthValidation = {
@@ -54,5 +64,6 @@ export const AuthValidation = {
     createLoginZodSchema,
     createResetPasswordZodSchema,
     createChangePasswordZodSchema,
-    resendOtpZodSchema
+    resendOtpZodSchema,
+    createSocialLoginZodSchema
 };

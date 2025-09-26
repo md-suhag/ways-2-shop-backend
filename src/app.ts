@@ -6,6 +6,8 @@ import { Morgan } from "./shared/morgan";
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import session from "express-session";
 import router from "./app/routes";
+import passport from "passport";
+import config from "./config";
 const app = express();
 
 // morgan
@@ -23,15 +25,16 @@ app.use(express.static('uploads'));
 
 // Session middleware (must be before passport initialization)
 app.use(session({
-    secret: "your_secret_key",
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    secret: config.express_session_secret!,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // Secure should be true in production with HTTPS
+   
 }));
 
 // Initialize Passport
-// app.use(passport.initialize());
-// app.use(passport.session());
+app.use(passport.initialize());
+app.use(passport.session());
 
 //router
 app.use('/api/v1', router);

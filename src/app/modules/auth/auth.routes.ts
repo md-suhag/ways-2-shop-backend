@@ -4,6 +4,7 @@ import auth from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
 import { AuthController } from './auth.controller';
 import { AuthValidation } from './auth.validation';
+import passport from 'passport';
 // import passport from '../../../config/passport'
 const router = express.Router();
 
@@ -63,10 +64,10 @@ router.post(
     AuthController.resendVerificationEmail
 );
 
-// router.post(
-//     '/social-login',
-//     AuthController.socialLogin
-// );
+router.post(
+    '/social-login',
+    AuthController.socialLogin
+);
 
 router.delete(
     '/delete-account',
@@ -76,14 +77,20 @@ router.delete(
 
 
 // Google Auth Routes
-// router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+router.get("/google",async (req: Request, res: Response, next: NextFunction) => {
+    const redirect = req.query.redirect || "/";
+    passport.authenticate("google", {
+      scope: ["profile", "email"],
+      state: redirect as string,
+    })(req, res, next);
+  });
 
-// router.get("/google/callback", 
-//     passport.authenticate("google", { failureRedirect: "/" }),
-//     (req, res) => {
-//         res.redirect("/"); // Redirect after successful login
-//     }
-// );
+router.get("/google/callback", 
+    passport.authenticate("google", { failureRedirect: "/" }),
+    (req, res) => {
+        res.redirect("/"); // Redirect after successful login
+    }
+);
 
 
 

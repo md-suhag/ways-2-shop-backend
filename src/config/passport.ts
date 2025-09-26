@@ -1,58 +1,70 @@
+// /* eslint-disable @typescript-eslint/no-explicit-any */
 // import passport from "passport";
 // import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-// import { Strategy as FacebookStrategy } from "passport-facebook";
-// import config from ".";
+// import  config  from ".";
 // import { User } from "../app/modules/user/user.model";
+// import { IsActive } from "../app/modules/user/user.interface";
 
 // // Google OAuth Strategy
 // passport.use(new GoogleStrategy({
 //     clientID: config.social.google_client_id as string,
 //     clientSecret: config.social.google_client_secret as string,
-//     callbackURL: "https://nadir.binarybards.online/api/v1/auth/google/callback"
-// }, async (accessToken, refreshToken, profile, done) => {
-//     try {
-        
-//         console.log(profile)
-//         done(null, profile);
-//     } catch (error) {
-//         done(error, undefined);
-//     }
-// }));
+//     callbackURL: config.social.google_callback_url as string,
 
-// // Facebook OAuth Strategy
-// passport.use(new FacebookStrategy({
-//     clientID: config.social.facebook_client_id as string,
-//     clientSecret: config.social.facebook_client_secret as string,
-//     callbackURL: "/auth/facebook/callback",
-//     profileFields: ['id', 'displayName', 'emails']
-// }, async (accessToken, refreshToken, profile, done) => {
-//     try {
-//         let user = await User.findOne({ appId: profile.id });
-
-//         if (!user) {
-//             user = await User.create({
-//                 appId: profile.id,
-//                 name: profile.displayName,
-//                 email: profile.emails?.[0]?.value
-//             });
+// }, async ( accessToken, refreshToken, profile, done) => {
+//       try {
+//         const email = profile.emails?.[0].value;
+//         if (!email) {
+//           return done(null, false, { message: "No email found" });
 //         }
 
-//         done(null, user);
-//     } catch (error) {
-//         done(error, null);
-//     }
-// }));
+//         let isUserExist = await User.findOne({ email });
+
+//         if (isUserExist && !isUserExist.isVerified) {
+//           return done(null, false, { message: "User is not verified" });
+//         }
+
+//         if (
+//           isUserExist &&
+//           (isUserExist.isActive === IsActive.BLOCKED ||
+//             isUserExist.isActive === IsActive.INACTIVE)
+//         ) {
+//           return done(null, false, {
+//             message: `User is ${isUserExist.isActive}`,
+//           });
+//         }
+//         if (isUserExist && isUserExist.isDeleted) {
+//           return done(null, false, { message: "User is deleted" });
+//         }
+
+//         if (!isUserExist) {
+//           isUserExist = await User.create({
+//             email,
+//             name: profile.displayName,
+//             image: profile.photos?.[0].value,
+//             isVerified: true,
+//           });
+//         }
+//         return done(null, isUserExist);
+//       } catch (error) {
+//         console.log("Google Strategy Error", error);
+//         return done(error);
+//       }
+//     }));
+
+
 
 // // Serialize & Deserialize User
 // passport.serializeUser((user: any, done) => {
-//     done(null, user.id);
+//     done(null, user._id);
 // });
 
 // passport.deserializeUser(async (id, done) => {
 //     try {
-//         // const user = await User.findById(id);
-//         done(null, id as any);
+//         const user = await User.findById(id);
+//         done(null, user);
 //     } catch (error) {
+//         console.log(error)
 //         done(error, null);
 //     }
 // });

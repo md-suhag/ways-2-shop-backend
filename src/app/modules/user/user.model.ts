@@ -1,21 +1,11 @@
 import { model, Query, Schema } from "mongoose";
 import { USER_ROLES } from "../../../enums/user";
-import { IAuthProvider, IsActive, IUser, UserModal } from "./user.interface";
+import {  IsActive, IUser, UserModal } from "./user.interface";
 import bcrypt from "bcrypt";
 import ApiError from "../../../errors/ApiErrors";
 import { StatusCodes } from "http-status-codes";
 import config from "../../../config";
 
-const authProviderSchema = new Schema<IAuthProvider>(
-  {
-    provider: { type: String, required: true },
-    providerId: { type: String, required: true },
-  },
-  {
-    versionKey: false,
-    _id: false,
-  }
-);
 const userSchema = new Schema<IUser, UserModal>(
     {
         name: {
@@ -29,7 +19,6 @@ const userSchema = new Schema<IUser, UserModal>(
         },
         password: {
             type: String,
-            required: true,
             select: 0,
             minlength: 8,
         },
@@ -66,7 +55,14 @@ const userSchema = new Schema<IUser, UserModal>(
             type: Boolean,
             default: false,
         },
-        authProviders:[authProviderSchema],
+        isOnline: {
+            type: Boolean,
+            default: false,
+        },
+        appId: {
+            type: String,
+        
+        },
         authentication: {
             type: {
                 isResetPassword: {
@@ -145,7 +141,10 @@ userSchema.pre('save', async function (next) {
     }
   
     //password hash
-    this.password = await bcrypt.hash( this.password, Number(config.bcrypt_salt_rounds));
+    if(this.isModified("password") && this.password){
+         this.password = await bcrypt.hash( this.password, Number(config.bcrypt_salt_rounds));
+    }
+   
     next();
 });
 export const User = model<IUser, UserModal>("User", userSchema)

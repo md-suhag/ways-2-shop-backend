@@ -4,6 +4,7 @@ import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { AuthService } from './auth.service';
 
+
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
     const { ...verifyData } = req.body;
     const result = await AuthService.verifyEmailToDB(verifyData);
@@ -56,7 +57,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 const changePassword = catchAsync(async (req: Request, res: Response) => {
-    const user = req.user;
+    const user = req.user? req.user:"";
     const { ...passwordData } = req.body;
     await AuthService.changePasswordToDB(user, passwordData);
 
@@ -92,16 +93,16 @@ const resendVerificationEmail = catchAsync(async (req: Request, res: Response) =
     });
 });
 
-// const socialLogin = catchAsync(async (req: Request, res: Response) => {
-//     const result = await AuthService.socialLoginFromDB(req.body);
+const socialLogin = catchAsync(async (req: Request, res: Response) => {
+    const result = await AuthService.socialLoginFromDB(req.body);
 
-//     sendResponse(res, {
-//         success: true,
-//         statusCode: StatusCodes.OK,
-//         message: 'Logged in Successfully',
-//         data: result
-//     });
-// });
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Logged in Successfully',
+        data: result
+    });
+});
 
 // delete user
 const deleteUser = catchAsync(async (req: Request, res: Response) => {
@@ -115,6 +116,7 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+
 export const AuthController = {
     verifyEmail,
     loginUser,
@@ -123,6 +125,7 @@ export const AuthController = {
     changePassword,
     newAccessToken,
     resendVerificationEmail,
-    // socialLogin,
-    deleteUser
+    socialLogin,
+    deleteUser,
+ 
 };
