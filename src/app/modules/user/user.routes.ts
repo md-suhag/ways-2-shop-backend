@@ -27,8 +27,9 @@ router
         UserController.createUser
     )
     .patch(
-        auth(USER_ROLES.ADMIN, USER_ROLES.CUSTOMER),
+        auth(),
         fileUploadHandler(),
+        validateRequest(UserValidation.updateUserProfileZodSchema),
         UserController.updateProfile
     );
 
