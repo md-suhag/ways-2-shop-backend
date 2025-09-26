@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get(
     '/profile',
-    auth(),
+    auth(...Object.values(USER_ROLES)),
     UserController.getUserProfile
 );
   
@@ -27,7 +27,7 @@ router
         UserController.createUser
     )
     .patch(
-        auth(),
+        auth(...Object.values(USER_ROLES)),
         fileUploadHandler(),
         validateRequest(UserValidation.updateUserProfileZodSchema),
         UserController.updateProfile

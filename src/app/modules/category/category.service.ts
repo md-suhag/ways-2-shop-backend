@@ -7,6 +7,9 @@ import { Bookmark } from '../bookmark/bookmark.model'
 
 const createCategoryToDB = async (payload: ICategory) => {
   const {name, image} = payload;
+  if(!image){
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Please provide category image");
+  }
   const isExistName = await Category.findOne({name: name})
 
   if(isExistName){
@@ -14,7 +17,7 @@ const createCategoryToDB = async (payload: ICategory) => {
     throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "This Category Name Already Exist");
   }
 
-  const createCategory:any = await Category.create(payload)
+  const createCategory = await Category.create(payload)
   if (!createCategory) {
     unlinkFile(image);
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create Category')

@@ -8,7 +8,7 @@ import fileUploadHandler from '../../middlewares/fileUploaderHandler'
 const router = express.Router()
 
 router.post(
-  '/create-service',
+  '/',
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN), fileUploadHandler(),
   validateRequest(CategoryValidation.createCategoryZodSchema),
   CategoryController.createCategory,
