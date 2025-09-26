@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { UserService } from './user.service';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
+import { JwtPayload } from 'jsonwebtoken';
 
 // register user
 const createUser = catchAsync( async (req: Request, res: Response) => {
@@ -32,7 +33,7 @@ const createAdmin = catchAsync( async (req: Request, res: Response) => {
 // retrieved user profile
 const getUserProfile = catchAsync(async (req: Request, res: Response) => {
     const user = req.user;
-    const result = await UserService.getUserProfileFromDB(user);
+    const result = await UserService.getUserProfileFromDB(user as JwtPayload);
 
     sendResponse(res, {
         success: true,

@@ -9,12 +9,13 @@ const router = express.Router();
 
 router.get(
     '/profile',
-    auth(USER_ROLES.ADMIN, USER_ROLES.CUSTOMER),
+    auth(),
     UserController.getUserProfile
 );
   
 router.post(
     '/create-admin',
+    auth(USER_ROLES.SUPER_ADMIN),
     validateRequest(UserValidation.createAdminZodSchema),
     UserController.createAdmin
 );
