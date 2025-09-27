@@ -3,7 +3,7 @@ import ApiError from '../../../errors/ApiErrors'
 import { ICategory } from './category.interface'
 import { Category } from './category.model'
 import unlinkFile from '../../../shared/unlinkFile'
-import { Bookmark } from '../bookmark/bookmark.model'
+
 
 const createCategoryToDB = async (payload: ICategory) => {
   const {name, image} = payload;
@@ -26,13 +26,13 @@ const createCategoryToDB = async (payload: ICategory) => {
   return createCategory
 }
 
-const getCategoriesFromDB = async (): Promise<ICategory[]> => {
+const getAllCategoriesFromDB = async (): Promise<ICategory[]> => {
   const result = await Category.find({})
   return result;
 }
 
-const updateCategoryToDB = async (id: string, payload: ICategory) => {
-  const isExistCategory:any = await Category.findById(id);
+const updateCategoryToDB = async (id: string, payload: Partial<ICategory>) => {
+  const isExistCategory = await Category.findById(id);
 
   if(!isExistCategory){
     throw new ApiError(StatusCodes.BAD_REQUEST, "Category doesn't exist");
@@ -43,7 +43,7 @@ const updateCategoryToDB = async (id: string, payload: ICategory) => {
   }
 
   const updateCategory = await Category.findOneAndUpdate({ _id: id }, payload, {
-    new: true,
+    new: true, 
   })
 
   return updateCategory
@@ -54,12 +54,13 @@ const deleteCategoryToDB = async (id: string): Promise<ICategory | null> => {
   if (!deleteCategory) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Category doesn't exist")
   }
+  unlinkFile(deleteCategory.image)
   return deleteCategory
 }
 
 export const CategoryService = {
   createCategoryToDB,
-  getCategoriesFromDB,
+  getAllCategoriesFromDB,
   updateCategoryToDB,
   deleteCategoryToDB
 }

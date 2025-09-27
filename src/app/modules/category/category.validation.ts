@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { CategoryStatus } from './category.interface'
 
 const createCategoryZodSchema = z.object({
   body: z.object({
@@ -8,7 +9,8 @@ const createCategoryZodSchema = z.object({
 
 const updateCategoryZodSchema = z.object({
   body: z.object({
-    name: z.string().optional()
+    name: z.string().optional(),
+    status:z.nativeEnum(CategoryStatus)
   }),
 })
 

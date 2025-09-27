@@ -18,6 +18,7 @@ router
   .route('/:id')
   .patch(
     auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN), fileUploadHandler(),
+    validateRequest(CategoryValidation.updateCategoryZodSchema),
     CategoryController.updateCategory,
   )
   .delete(
@@ -26,8 +27,8 @@ router
   )
 
 router.get('/',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.CUSTOMER),
-  CategoryController.getCategories,
+  
+  CategoryController.getAllCategories,
 )
 
 export const CategoryRoutes = router

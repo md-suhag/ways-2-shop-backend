@@ -1,7 +1,7 @@
 import { model, Schema } from 'mongoose'
-import { ICategory, CategoryModel } from './category.interface'
+import { ICategory, CategoryModel, CategoryStatus } from './category.interface'
 
-const serviceSchema = new Schema<ICategory, CategoryModel>(
+const categorySchema = new Schema<ICategory, CategoryModel>(
   {
     name: {
       type: String,
@@ -12,8 +12,17 @@ const serviceSchema = new Schema<ICategory, CategoryModel>(
       type: String,
       required: true
     },
+    status:{
+      type:String,
+      enum:Object.values(CategoryStatus),
+      default:CategoryStatus.ACTIVE
+    }
   },
   { timestamps: true },
 )
-
-export const Category = model<ICategory, CategoryModel>('Category', serviceSchema)
+// Apply to all update operations
+categorySchema.pre(['updateOne', 'updateMany', 'findOneAndUpdate'], function (next) {
+  this.setOptions({ runValidators: true });
+  next();
+});
+export const Category = model<ICategory, CategoryModel>('Category', categorySchema)
