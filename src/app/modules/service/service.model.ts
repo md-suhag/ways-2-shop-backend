@@ -14,6 +14,11 @@ const serviceSchema = new Schema<IService, ServiceModel>({
     type: Number,
     required: true,
   },
+  locationName: { type: String, required: true },
+  coordinates: {
+    type: { type: String, enum: ["Point"], required: true },
+    coordinates: { type: [Number], required: true },
+  },
   category: {
     type: Schema.Types.ObjectId,
     required: true,
@@ -23,5 +28,7 @@ const serviceSchema = new Schema<IService, ServiceModel>({
     required: true,
   },
 });
+
+serviceSchema.index({ coordinates: "2dsphere" });
 
 export const Service = model<IService, ServiceModel>("Service", serviceSchema);

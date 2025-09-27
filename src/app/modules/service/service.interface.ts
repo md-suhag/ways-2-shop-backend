@@ -1,11 +1,18 @@
-import { Model, Types } from 'mongoose';
+import { Model, Types } from "mongoose";
+
+interface ICoordinates {
+  type: "Point";
+  coordinates: [number, number];
+}
 
 export interface IService {
-  description:string;
-  image:string; 
-  ratePerHour:number;
-  category:Types.ObjectId;
-  provider:Types.ObjectId;
-};
+  description: string;
+  image: string;
+  ratePerHour: number;
+  locationName: string;
+  coordinates: ICoordinates;
+  category: Types.ObjectId;
+  provider: Types.ObjectId;
+}
 
 export type ServiceModel = Model<IService>;
