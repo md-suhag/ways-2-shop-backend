@@ -46,7 +46,7 @@ const bookingSchema = new Schema<IBooking, BookingModel>(
       required: true,
     },
     txId: { type: String, default: null },
-    bookingId: { type: String, unique: true },
+    orderId: { type: String, unique: true },
     price: { type: Number, required: true },
     location: { type: LocationSchema, required: true },
     images: [{ type: String }],

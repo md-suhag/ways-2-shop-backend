@@ -30,7 +30,7 @@ export interface IBooking {
   paymentStatus: IPaymentStatus;
   paymentType: IPaymentType;
   txId?: string | null;
-  bookingId: string;
+  orderId: string;
   price: number;
   location: ILocation;
   images?: string[];
