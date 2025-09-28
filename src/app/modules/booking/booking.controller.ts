@@ -1,4 +1,32 @@
-import { Request, Response, NextFunction } from 'express';
-import { BookingServices } from './booking.service';
+import { Request, Response } from "express";
+import { BookingServices } from "./booking.service";
+import catchAsync from "../../../shared/catchAsync";
+import sendResponse from "../../../shared/sendResponse";
+import { StatusCodes } from "http-status-codes";
+import { JwtPayload } from "jsonwebtoken";
 
-export const BookingController = { };
+const createBooking = catchAsync(async (req: Request, res: Response) => {
+  let images: string[] = [];
+
+  if (req.files && "image" in req.files) {
+    images = (req.files.image as Express.Multer.File[]).map(
+      (file) => `/images/${file.filename}`
+    );
+  }
+  const data = {
+    images,
+    ...req.body,
+  };
+  const result = await BookingServices.createBooking(
+    data,
+    req.user as JwtPayload
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: "Booking created successfully",
+    data: result,
+  });
+});
+
+export const BookingController = { createBooking };

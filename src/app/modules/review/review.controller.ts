@@ -12,7 +12,7 @@ const createReview = catchAsync(async (req: Request, res: Response) => {
   );
 
   sendResponse(res, {
-    statusCode: StatusCodes.OK,
+    statusCode: StatusCodes.CREATED,
     success: true,
     message: "Review Created Successfully",
     data: result,

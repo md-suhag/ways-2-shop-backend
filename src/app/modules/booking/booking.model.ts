@@ -1,5 +1,13 @@
-import { Schema, model } from 'mongoose';
-import { IBooking, BookingModel, IBookingStatus, IPaymentStatus, IPaymentType, ILocation, ICoordinates } from './booking.interface'; 
+import { Schema, model } from "mongoose";
+import {
+  IBooking,
+  BookingModel,
+  IBookingStatus,
+  IPaymentStatus,
+  IPaymentType,
+  ILocation,
+  ICoordinates,
+} from "./booking.interface";
 
 const CoordinatesSchema = new Schema<ICoordinates>(
   {
@@ -17,8 +25,8 @@ const LocationSchema = new Schema<ILocation>(
   { _id: false }
 );
 
-
-const bookingSchema = new Schema<IBooking, BookingModel>( {
+const bookingSchema = new Schema<IBooking, BookingModel>(
+  {
     service: { type: Schema.Types.ObjectId, ref: "Service", required: true },
     customer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     provider: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -42,11 +50,12 @@ const bookingSchema = new Schema<IBooking, BookingModel>( {
     price: { type: Number, required: true },
     location: { type: LocationSchema, required: true },
     images: [{ type: String }],
-    note: { type: String, default: "" },
+    notes: { type: String, default: "" },
     bookingDate: { type: Date, required: true },
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
   },
-  { timestamps: true });
+  { timestamps: true }
+);
 
-export const Booking = model<IBooking, BookingModel>('Booking', bookingSchema);
+export const Booking = model<IBooking, BookingModel>("Booking", bookingSchema);
