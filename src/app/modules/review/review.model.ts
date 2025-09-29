@@ -18,6 +18,11 @@ const reviewSchema = new Schema<IReview, ReviewModel>(
       ref: "Service",
       required: true,
     },
+    booking: {
+      type: Schema.Types.ObjectId,
+      ref: "Booking",
+      required: true,
+    },
     comment: {
       type: String,
       required: true,

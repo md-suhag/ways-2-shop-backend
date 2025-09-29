@@ -21,10 +21,12 @@ const serviceSchema = new Schema<IService, ServiceModel>({
   },
   category: {
     type: Schema.Types.ObjectId,
+    ref: "Category",
     required: true,
   },
   provider: {
     type: Schema.Types.ObjectId,
+    ref: "User",
     required: true,
   },
 });

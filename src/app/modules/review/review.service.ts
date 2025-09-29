@@ -16,6 +16,12 @@ const createReviewToDB = async (
     throw new ApiError(StatusCodes.NOT_FOUND, "No Customer Found");
   }
 
+  const isExistReview = await Review.findOne({ booking: payload.booking });
+
+  if (isExistReview) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Already Reviewed");
+  }
+
   // checking the rating is valid or not;
   const rating = Number(payload.rating);
   if (rating < 1 || rating > 5) {
@@ -23,9 +29,18 @@ const createReviewToDB = async (
   }
 
   const result = await Review.create(payload);
+
   if (!result) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Failed To create Review");
   }
+
+  await User.findByIdAndUpdate(user.id, {
+    $inc: {
+      totalRating: rating,
+      totalReview: 1,
+    },
+  });
+
   return payload;
 };
 
