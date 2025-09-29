@@ -1,19 +1,20 @@
-import express from 'express';
-import { USER_ROLES } from '../../../enums/user';
-import auth from '../../middlewares/auth';
-import { MessageController } from './message.controller';
-import fileUploadHandler from '../../middlewares/fileUploaderHandler';
+import express from "express";
+import { USER_ROLES } from "../../../enums/user";
+import auth from "../../middlewares/auth";
+import { MessageController } from "./message.controller";
+import validateRequest from "../../middlewares/validateRequest";
+import { MessageValidations } from "./message.validation";
 
 const router = express.Router();
 
 router.post(
-  '/',
-  fileUploadHandler(),
-  auth(USER_ROLES.PROVIDER, USER_ROLES.PROVIDER),
-  MessageController.sendMessage
+  "/",
+  auth(USER_ROLES.CUSTOMER, USER_ROLES.PROVIDER),
+  validateRequest(MessageValidations.createMessageZodSchema),
+  MessageController.createMessage
 );
 router.get(
-  '/:id',
+  "/:id",
   auth(USER_ROLES.PROVIDER, USER_ROLES.PROVIDER),
   MessageController.getMessage
 );
