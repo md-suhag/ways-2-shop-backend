@@ -13,4 +13,10 @@ router.post(
   ChatController.createChat
 );
 
+router.get(
+  "/",
+  auth(USER_ROLES.CUSTOMER, USER_ROLES.PROVIDER),
+  ChatController.getMyChats
+);
+
 export const ChatRoutes = router;
