@@ -1,12 +1,14 @@
-import { Model, Types } from 'mongoose';
+import { Model, Types } from "mongoose";
+import { NOTIFICATION_TYPE } from "./notification.constants";
 
 export interface INotification {
-    text: string;
-    receiver?: Types.ObjectId;
-    read: boolean;
-    referenceId?: string;
-    screen?: "RESERVATION" | "CHAT";
-    type?: "ADMIN";
+  type: NOTIFICATION_TYPE;
+  title: string;
+  receiver: Types.ObjectId;
+  referenceId: string;
+  isRead: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type NotificationModel = Model<INotification>;

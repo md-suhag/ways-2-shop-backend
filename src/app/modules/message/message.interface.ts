@@ -1,10 +1,13 @@
-import { Model, Types } from 'mongoose';
+import { Model, Types } from "mongoose";
+import { MESSAGE_TYPE } from "./message.constants";
 
 export interface IMessage {
-  chatId: Types.ObjectId;
+  _id?: Types.ObjectId;
+  chat: Types.ObjectId;
   sender: Types.ObjectId;
+  type: MESSAGE_TYPE;
   text?: string;
-  image?: string;
+  seenBy?: Types.ObjectId[];
 }
 
-export type MessageModel = Model<IMessage, Record<string, unknown>>;
+export type MessageModel = Model<IMessage>;

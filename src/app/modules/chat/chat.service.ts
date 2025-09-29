@@ -1,55 +1,23 @@
-import { IMessage } from '../message/message.interface';
-import { Message } from '../message/message.model';
-import { IChat } from './chat.interface';
-import { Chat } from './chat.model';
+import { JwtPayload } from "jsonwebtoken";
 
-const createChatToDB = async (payload: any): Promise<IChat> => {
-    const isExistChat: IChat | null = await Chat.findOne({
-        participants: { $all: payload },
-    });
-    
-    if (isExistChat) {
-        return isExistChat;
-    }
-    const chat: IChat = await Chat.create({ participants: payload });
-    return chat;
-}
+import { IChat } from "./chat.interface";
+import { Chat } from "./chat.model";
 
-const getChatFromDB = async (user: any, search: string): Promise<IChat[]> => {
-  
-    const chats: any = await Chat.find({ participants: { $in: [user.id] } })
-        .populate({
-            path: 'participants',
-            select: '_id firstName lastName image',
-            match: {
-            _id: { $ne: user.id }, // Exclude user.id in the populated participants
-            ...(search && { name: { $regex: search, $options: 'i' } }), // Apply $regex only if search is valid
-            }
-        })
-        .select('participants status');
-  
-    // Filter out chats where no participants match the search (empty participants)
-    const filteredChats = chats?.filter(
-        (chat: any) => chat?.participants?.length > 0
-    );
-  
-    //Use Promise.all to handle the asynchronous operations inside the map
-    const chatList: IChat[] = await Promise.all(
-        filteredChats?.map(async (chat: any) => {
-            const data = chat?.toObject();
-    
-            const lastMessage: IMessage | null = await Message.findOne({ chatId: chat?._id })
-            .sort({ createdAt: -1 })
-            .select('text offer createdAt sender');
-    
-            return {
-                ...data,
-                lastMessage: lastMessage || null,
-            };
-        })
-    );
-    
-    return chatList;
+const createChatToDB = async (
+  user: JwtPayload,
+  otherParticipantId: string
+): Promise<IChat> => {
+  const participants = [user.id, otherParticipantId];
+
+  const isExistChat = await Chat.findOne({
+    participants: { $all: participants },
+  });
+  if (isExistChat) {
+    return isExistChat;
+  }
+
+  const result = await Chat.create({ participants });
+  return result;
 };
 
-export const ChatService = { createChatToDB, getChatFromDB };
+export const ChatService = { createChatToDB };
