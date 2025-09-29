@@ -15,8 +15,8 @@ router.post(
 );
 router.get(
   "/:id",
-  auth(USER_ROLES.PROVIDER, USER_ROLES.PROVIDER),
-  MessageController.getMessage
+  auth(USER_ROLES.CUSTOMER, USER_ROLES.PROVIDER),
+  MessageController.getChatMessages
 );
 
 export const MessageRoutes = router;

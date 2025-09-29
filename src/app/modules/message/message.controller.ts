@@ -22,9 +22,12 @@ const createMessage = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getMessage = catchAsync(async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const messages = await MessageService.getMessageFromDB(id);
+const getChatMessages = catchAsync(async (req: Request, res: Response) => {
+  const messages = await MessageService.getChatMessages(
+    req.params.id,
+    req.query,
+    req.user as JwtPayload
+  );
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
@@ -33,4 +36,4 @@ const getMessage = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const MessageController = { createMessage, getMessage };
+export const MessageController = { createMessage, getChatMessages };
