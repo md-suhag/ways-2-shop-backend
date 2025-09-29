@@ -1,6 +1,52 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { JwtPayload } from "jsonwebtoken";
-import { INotification } from "./notification.interface";
 import { Notification } from "./notification.model";
+import { FilterQuery } from "mongoose";
+import QueryBuilder from "../../builder/QueryBuilder";
+import { timeAgo } from "../../../util/timeAgo";
 
-export const NotificationService = {};
+const getUserNotificationFromDB = async (
+  user: JwtPayload,
+  query: FilterQuery<any>
+) => {
+  const notificationQuery = new QueryBuilder(
+    Notification.find({ receiver: user.id }).sort("-createdAt"),
+    query
+  ).paginate();
+
+  const [notifications, pagination, unreadCount] = await Promise.all([
+    notificationQuery.modelQuery.lean().exec(),
+    notificationQuery.getPaginationInfo(),
+    Notification.countDocuments({ receiver: user.id, isRead: false }),
+  ]);
+
+  return {
+    notifications: notifications.map((notification: any) => {
+      return {
+        ...notification,
+        timeAgo: timeAgo(notification.createdAt),
+      };
+    }),
+    pagination,
+    unreadCount,
+  };
+};
+
+const readUserNotificationToDB = async (user: JwtPayload): Promise<boolean> => {
+  await Notification.bulkWrite([
+    {
+      updateMany: {
+        filter: { receiver: user.id, isRead: false },
+        update: { $set: { isRead: true } },
+        upsert: false,
+      },
+    },
+  ]);
+
+  return true;
+};
+
+export const NotificationService = {
+  getUserNotificationFromDB,
+  readUserNotificationToDB,
+};

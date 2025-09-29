@@ -10,6 +10,7 @@ import { PaymentRoutes } from "../modules/payment/payment.route";
 import { AdminRoutes } from "../modules/admin/admin.route";
 import { ChatRoutes } from "../modules/chat/chat.routes";
 import { MessageRoutes } from "../modules/message/message.routes";
+import { NotificationRoutes } from "../modules/notification/notification.routes";
 const router = express.Router();
 
 const apiRoutes = [
@@ -24,6 +25,7 @@ const apiRoutes = [
   { path: "/admin", route: AdminRoutes },
   { path: "/chats", route: ChatRoutes },
   { path: "/messages", route: MessageRoutes },
+  { path: "/notifications", route: NotificationRoutes },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));
