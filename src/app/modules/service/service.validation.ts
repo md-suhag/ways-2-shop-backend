@@ -13,7 +13,72 @@ const createServiceZodSchema = z.object({
         message: "Rate per hour must be greater than 0",
       }),
     category: z.string({ required_error: "category is required" }),
+    locationName: z.string({ required_error: "Location name is required" }),
+
+    coordinates: z.object({
+      type: z.literal("Point", {
+        errorMap: () => ({
+          message: "Coordinates type must be 'Point'",
+        }),
+      }),
+      coordinates: z
+        .tuple([
+          z
+            .number({
+              required_error: "Longitude is required",
+              invalid_type_error: "Longitude must be a number",
+            })
+            .min(-180)
+            .max(180),
+          z
+            .number({
+              required_error: "Latitude is required",
+              invalid_type_error: "Latitude must be a number",
+            })
+            .min(-90)
+            .max(90),
+        ])
+        .refine(
+          (coords) => coords.length === 2,
+          "Coordinates must be [longitude, latitude]"
+        ),
+    }),
+  }),
+});
+const getAllServiceZodSchema = z.object({
+  body: z.object({
+    coordinates: z.object({
+      type: z.literal("Point", {
+        errorMap: () => ({
+          message: "Coordinates type must be 'Point'",
+        }),
+      }),
+      coordinates: z
+        .tuple([
+          z
+            .number({
+              required_error: "Longitude is required",
+              invalid_type_error: "Longitude must be a number",
+            })
+            .min(-180)
+            .max(180),
+          z
+            .number({
+              required_error: "Latitude is required",
+              invalid_type_error: "Latitude must be a number",
+            })
+            .min(-90)
+            .max(90),
+        ])
+        .refine(
+          (coords) => coords.length === 2,
+          "Coordinates must be [longitude, latitude]"
+        ),
+    }),
   }),
 });
 
-export const ServiceValidations = { createServiceZodSchema };
+export const ServiceValidations = {
+  createServiceZodSchema,
+  getAllServiceZodSchema,
+};
