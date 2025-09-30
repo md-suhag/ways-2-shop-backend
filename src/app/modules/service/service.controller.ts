@@ -11,9 +11,15 @@ const createService = catchAsync(async (req: Request, res: Response) => {
     image = `/images/${req.files.image[0].filename}`;
   }
 
+  const { latitude, longitude, ...rest } = req.body;
+
   const data = {
     image,
-    ...req.body,
+    ...rest,
+    coordinates: {
+      type: "Point",
+      coordinates: [Number(longitude), Number(latitude)],
+    },
   };
 
   const result = await ServiceService.createServiceToDB(

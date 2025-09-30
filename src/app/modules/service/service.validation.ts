@@ -15,34 +15,20 @@ const createServiceZodSchema = z.object({
     category: z.string({ required_error: "category is required" }),
     locationName: z.string({ required_error: "Location name is required" }),
 
-    coordinates: z.object({
-      type: z.literal("Point", {
-        errorMap: () => ({
-          message: "Coordinates type must be 'Point'",
-        }),
-      }),
-      coordinates: z
-        .tuple([
-          z
-            .number({
-              required_error: "Longitude is required",
-              invalid_type_error: "Longitude must be a number",
-            })
-            .min(-180)
-            .max(180),
-          z
-            .number({
-              required_error: "Latitude is required",
-              invalid_type_error: "Latitude must be a number",
-            })
-            .min(-90)
-            .max(90),
-        ])
-        .refine(
-          (coords) => coords.length === 2,
-          "Coordinates must be [longitude, latitude]"
-        ),
-    }),
+    latitude: z
+      .number({
+        required_error: "Latitude is required",
+        invalid_type_error: "Latitude must be a number",
+      })
+      .min(-90)
+      .max(90),
+    longitude: z
+      .number({
+        required_error: "Longitude is required",
+        invalid_type_error: "Longitude must be a number",
+      })
+      .min(-180)
+      .max(180),
   }),
 });
 const getAllServiceZodSchema = z.object({
