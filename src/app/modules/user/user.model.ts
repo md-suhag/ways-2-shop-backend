@@ -1,10 +1,32 @@
 import { model, Query, Schema } from "mongoose";
 import { USER_ROLES } from "../../../enums/user";
-import { IsActive, IUser, UserModal } from "./user.interface";
+import {
+  ICoordinates,
+  ILocation,
+  IsActive,
+  IUser,
+  UserModal,
+} from "./user.interface";
 import bcrypt from "bcrypt";
 import ApiError from "../../../errors/ApiErrors";
 import { StatusCodes } from "http-status-codes";
 import config from "../../../config";
+
+const CoordinatesSchema = new Schema<ICoordinates>(
+  {
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+  },
+  { _id: false } // don’t create extra _id for subdoc
+);
+
+const LocationSchema = new Schema<ILocation>(
+  {
+    locationName: { type: String, required: true },
+    coordinates: { type: CoordinatesSchema, required: true },
+  },
+  { _id: false }
+);
 
 const userSchema = new Schema<IUser, UserModal>(
   {
@@ -25,9 +47,7 @@ const userSchema = new Schema<IUser, UserModal>(
     contact: {
       type: String,
     },
-    location: {
-      type: String,
-    },
+    location: { type: LocationSchema },
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
@@ -35,8 +55,6 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     profile: {
       type: String,
-      default:
-        "https://res.cloudinary.com/dzo4husae/image/upload/v1733459922/zfyfbvwgfgshmahyvfyk.png",
     },
     businessCategory: [
       {

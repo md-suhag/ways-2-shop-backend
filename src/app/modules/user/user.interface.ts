@@ -21,13 +21,21 @@ export enum IsActive {
   BLOCKED = "BLOCKED",
 }
 
+export interface ILocation {
+  locationName: string;
+  coordinates: ICoordinates;
+}
+export interface ICoordinates {
+  lat: number;
+  lng: number;
+}
 export interface IUser {
   name: string;
   email: string;
   password?: string;
   role: USER_ROLES;
   contact?: string;
-  location?: string;
+  location?: ILocation;
   profile?: string;
   businessCategory?: string[];
   totalJobs: number;
