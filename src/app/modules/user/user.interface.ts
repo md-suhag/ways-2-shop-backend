@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { USER_ROLES } from "../../../enums/user";
 
 interface IStripeAccountInfo {
@@ -37,7 +37,7 @@ export interface IUser {
   contact?: string;
   location?: ILocation;
   profile?: string;
-  businessCategory?: string[];
+  businessCategory?: Types.ObjectId[];
   totalJobs: number;
   totalRating: number;
   totalReview: number;

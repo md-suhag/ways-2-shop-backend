@@ -5,6 +5,8 @@ import { IService } from "./service.interface";
 import { Service } from "./service.model";
 import { JwtPayload } from "jsonwebtoken";
 import QueryBuilder from "../../builder/QueryBuilder";
+import { User } from "../user/user.model";
+
 // import { FilterQuery } from "mongoose";
 
 const createServiceToDB = async (
@@ -15,6 +17,23 @@ const createServiceToDB = async (
     throw new ApiError(StatusCodes.BAD_REQUEST, "Service image is required");
   }
   payload.provider = user.id;
+
+  // find provider
+  const existedUser = await User.findById(user.id);
+  if (!existedUser) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User not found!");
+  }
+
+  // attach provider's business categories
+  if (existedUser.businessCategory && existedUser.businessCategory.length > 0) {
+    payload.categories = existedUser.businessCategory;
+  } else {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "User has no business categories. Please update profile first."
+    );
+  }
+
   await Service.create(payload);
 };
 
@@ -83,7 +102,9 @@ const getAllServiceFromDB = async (payload: any, query: any) => {
   const filter: any = {};
 
   // category filter
-  if (payload?.category) filter.category = payload.category;
+  if (payload?.category) {
+    filter.categories = { $in: [payload.category] };
+  }
 
   // geo location filter using $geoWithin
   if (payload?.coordinates && payload?.distance) {
@@ -107,13 +128,15 @@ const getAllServiceFromDB = async (payload: any, query: any) => {
 
   // Exclude description & image, populate provider + category
   serviceQuery.modelQuery = serviceQuery.modelQuery
-    .select("-description -image") // exclude fields
+    .select("-description -image -coordinates -locationName -categories")
     .populate({
       path: "provider",
-      select: "name profile totalReview totalJobs totalRating businessCategory", // provider fields
-    })
-    .populate("category", "name"); // include category name only
-
+      select: "name profile totalReview totalJobs totalRating businessCategory",
+      populate: {
+        path: "businessCategory",
+        select: "name",
+      },
+    });
   const [services, pagination] = await Promise.all([
     serviceQuery.modelQuery.lean().exec(),
     serviceQuery.getPaginationInfo(),

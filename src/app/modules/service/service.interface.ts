@@ -11,7 +11,7 @@ export interface IService {
   ratePerHour: number;
   locationName: string;
   coordinates: ICoordinates;
-  category: Types.ObjectId;
+  categories: Types.ObjectId[];
   provider: Types.ObjectId;
 }
 

@@ -48,7 +48,8 @@ const createService = catchAsync(async (req: Request, res: Response) => {
 // });
 
 const getAllService = catchAsync(async (req: Request, res: Response) => {
-  const { latitude, longitude, distance, category, page, limit } = req.query;
+  const { latitude, longitude, distance, category, page, limit, searchTerm } =
+    req.query;
 
   const filterPayload = {
     coordinates:
@@ -57,7 +58,7 @@ const getAllService = catchAsync(async (req: Request, res: Response) => {
     category,
   };
 
-  const queryParams = { page, limit };
+  const queryParams = { page, limit, searchTerm };
 
   const result = await ServiceService.getAllServiceFromDB(
     filterPayload,

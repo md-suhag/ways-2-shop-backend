@@ -20,11 +20,13 @@ const serviceSchema = new Schema<IService, ServiceModel>(
       type: { type: String, enum: ["Point"], required: true },
       coordinates: { type: [Number], required: true },
     },
-    category: {
-      type: Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
-    },
+    categories: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Category",
+        required: true,
+      },
+    ],
     provider: {
       type: Schema.Types.ObjectId,
       ref: "User",

@@ -12,7 +12,6 @@ const createServiceZodSchema = z.object({
       .refine((val) => val > 0, {
         message: "Rate per hour must be greater than 0",
       }),
-    category: z.string({ required_error: "category is required" }),
     locationName: z.string({ required_error: "Location name is required" }),
 
     latitude: z
