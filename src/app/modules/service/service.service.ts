@@ -122,7 +122,14 @@ const getAllServiceFromDB = async (payload: any, query: any) => {
   return { services, pagination };
 };
 
+const getSingleServiceFromDB = async (id: string) => {
+  return await Service.findById(id)
+    .select("description image ratePerHour provider")
+    .populate("provider", "name totalReview, totalJobs totalRating");
+};
+
 export const ServiceService = {
   createServiceToDB,
   getAllServiceFromDB,
+  getSingleServiceFromDB,
 };
