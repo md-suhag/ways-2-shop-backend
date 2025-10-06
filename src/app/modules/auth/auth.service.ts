@@ -133,6 +133,13 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
         authentication: { oneTimeCode: null, expireAt: null },
       }
     );
+    //create token
+    const accessToken = jwtHelper.createToken(
+      { id: isExistUser._id, role: isExistUser.role, email: isExistUser.email },
+      config.jwt.jwt_secret as Secret,
+      config.jwt.jwt_expire_in as string
+    );
+    data = { accessToken };
     message = "Email verified successfully";
   } else {
     await User.findOneAndUpdate(
