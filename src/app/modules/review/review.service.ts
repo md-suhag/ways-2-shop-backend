@@ -34,11 +34,24 @@ const createReviewToDB = async (
     throw new ApiError(StatusCodes.BAD_REQUEST, "Failed To create Review");
   }
 
-  await User.findByIdAndUpdate(user.id, {
-    $inc: {
-      totalRating: rating,
-      totalReview: 1,
-    },
+  const provider = await User.findById(payload.provider);
+  if (!provider) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "No Provider Found");
+  }
+
+  // initialize stats if undefined
+  provider.totalReview = provider.totalReview || 0;
+  provider.avgRating = provider.avgRating || 0;
+
+  // calculate new average incrementally
+  const newTotalReview = provider.totalReview + 1;
+  const newAvgRating =
+    (provider.avgRating * provider.totalReview + rating) / newTotalReview;
+
+  // update provider
+  await User.findByIdAndUpdate(provider._id, {
+    totalReview: newTotalReview,
+    avgRating: newAvgRating,
   });
 
   return payload;

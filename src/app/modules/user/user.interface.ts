@@ -39,7 +39,7 @@ export interface IUser {
   profile?: string;
   businessCategory?: Types.ObjectId[];
   totalJobs: number;
-  totalRating: number;
+  avgRating: number;
   totalReview: number;
   isVerified?: boolean;
   isActive: IsActive;

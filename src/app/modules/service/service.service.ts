@@ -131,7 +131,7 @@ const getAllServiceFromDB = async (payload: any, query: any) => {
     .select("-description -image -coordinates -locationName -categories")
     .populate({
       path: "provider",
-      select: "name profile totalReview totalJobs totalRating businessCategory",
+      select: "name profile totalReview totalJobs avgRating businessCategory",
       populate: {
         path: "businessCategory",
         select: "name",
@@ -148,7 +148,7 @@ const getAllServiceFromDB = async (payload: any, query: any) => {
 const getSingleServiceFromDB = async (id: string) => {
   return await Service.findById(id)
     .select("description image ratePerHour provider")
-    .populate("provider", "name totalReview, totalJobs totalRating");
+    .populate("provider", "name totalReview avgRating totalJobs");
 };
 
 export const ServiceService = {
