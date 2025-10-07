@@ -99,7 +99,7 @@ const updateProfileToDB = async (
   }
 
   //unlink file here
-  if (payload.profile) {
+  if (payload.profile && isExistUser.profile) {
     unlinkFile(isExistUser.profile);
   }
 
