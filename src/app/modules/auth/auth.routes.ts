@@ -67,10 +67,17 @@ router.post(
   AuthController.socialLogin
 );
 
-router.delete(
-  "/delete-account",
-  auth(USER_ROLES.ADMIN),
-  AuthController.deleteUser
+router.post(
+  "/verify-password",
+  auth(...Object.values(USER_ROLES)),
+  validateRequest(AuthValidation.verfiyPasswordZodSchema),
+  AuthController.verifyPassword
+);
+router.post(
+  "/verify-delete-otp",
+  auth(...Object.values(USER_ROLES)),
+  validateRequest(AuthValidation.verifyDeleteOtpZodSchema),
+  AuthController.verifyDeleteOtp
 );
 
 // Google Auth Routes

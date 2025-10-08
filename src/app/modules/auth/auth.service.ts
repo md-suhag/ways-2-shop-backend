@@ -395,9 +395,7 @@ const socialLoginFromDB = async (payload: IUser) => {
   }
 };
 
-// delete user
-// delete user
-const deleteUserFromDB = async (user: JwtPayload, password: string) => {
+const verifyPasswordFromDB = async (user: JwtPayload, password: string) => {
   const isExistUser = await User.findById(user.id).select("+password");
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
@@ -411,10 +409,51 @@ const deleteUserFromDB = async (user: JwtPayload, password: string) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Password is incorrect");
   }
 
-  const updateUser = await User.findByIdAndDelete(user.id);
-  if (!updateUser) {
+  //send email
+  const otp = generateOTP();
+  const values = {
+    name: isExistUser.name,
+    otp: otp,
+    email: isExistUser.email,
+  };
+
+  const deleteAccountTemplate = emailTemplate.deleteAccountOtp(values);
+  emailHelper.sendEmail(deleteAccountTemplate);
+
+  //save to DB
+  const authentication = {
+    oneTimeCode: otp,
+    expireAt: new Date(Date.now() + 3 * 60000),
+  };
+
+  await User.findOneAndUpdate(
+    { _id: isExistUser._id },
+    { $set: { authentication } }
+  );
+  return;
+};
+const verifyDeleteOtpFromDB = async (user: JwtPayload, oneTimeCode: number) => {
+  const isExistUser = await User.findById(user.id).select("+authentication");
+  if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
+  if (isExistUser.authentication?.oneTimeCode !== oneTimeCode) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "You provided wrong otp");
+  }
+
+  const date = new Date();
+  if (date > isExistUser.authentication?.expireAt) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Otp already expired, Please try again"
+    );
+  }
+
+  await User.findByIdAndUpdate(user.id, {
+    isDeleted: true,
+    authentication: { oneTimeCode: null, expireAt: null },
+  });
+
   return;
 };
 
@@ -427,5 +466,6 @@ export const AuthService = {
   newAccessTokenToUser,
   resendVerificationEmailToDB,
   socialLoginFromDB,
-  deleteUserFromDB,
+  verifyPasswordFromDB,
+  verifyDeleteOtpFromDB,
 };

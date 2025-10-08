@@ -104,9 +104,8 @@ const socialLogin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// delete user
-const deleteUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.deleteUserFromDB(
+const verifyPassword = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.verifyPasswordFromDB(
     req.user as JwtPayload,
     req.body.password
   );
@@ -114,7 +113,20 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "Account Deleted successfully",
+    message: "Password Verified. Check your mail for OTP",
+    data: result,
+  });
+});
+const verifyDeleteOtp = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.verifyDeleteOtpFromDB(
+    req.user as JwtPayload,
+    req.body.oneTimeCode
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Account Deleted Successfully",
     data: result,
   });
 });
@@ -128,5 +140,6 @@ export const AuthController = {
   newAccessToken,
   resendVerificationEmail,
   socialLogin,
-  deleteUser,
+  verifyPassword,
+  verifyDeleteOtp,
 };

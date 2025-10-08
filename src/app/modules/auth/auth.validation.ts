@@ -71,6 +71,17 @@ const createSocialLoginZodSchema = z.object({
     role: z.enum([USER_ROLES.CUSTOMER, USER_ROLES.PROVIDER]),
   }),
 });
+const verfiyPasswordZodSchema = z.object({
+  body: z.object({
+    password: z.string({ required_error: "Password is required" }),
+  }),
+});
+
+const verifyDeleteOtpZodSchema = z.object({
+  body: z.object({
+    oneTimeCode: z.number({ required_error: "One time code is required" }),
+  }),
+});
 
 export const AuthValidation = {
   createVerifyEmailZodSchema,
@@ -80,4 +91,6 @@ export const AuthValidation = {
   createChangePasswordZodSchema,
   resendOtpZodSchema,
   createSocialLoginZodSchema,
+  verfiyPasswordZodSchema,
+  verifyDeleteOtpZodSchema,
 };
