@@ -344,7 +344,7 @@ const resendVerificationEmailToDB = async (email: string) => {
 
 // social authentication
 const socialLoginFromDB = async (payload: IUser) => {
-  const { appId, role } = payload;
+  const { appId, role, email } = payload;
 
   const isExistUser = await User.findOne({ appId });
 
@@ -372,7 +372,7 @@ const socialLoginFromDB = async (payload: IUser) => {
 
     return { accessToken, refreshToken };
   } else {
-    const user = await User.create({ appId, role, isVerified: true });
+    const user = await User.create({ appId, email, role, isVerified: true });
     if (!user) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Failed to created User");
     }
