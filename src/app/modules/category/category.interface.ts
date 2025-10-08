@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { Model } from "mongoose";
 
 export enum CategoryStatus {
   ACTIVE = "ACTIVE",
@@ -8,8 +8,8 @@ export enum CategoryStatus {
 export interface ICategory {
   name: string;
   image: string;
-  status:CategoryStatus
-
+  status: CategoryStatus;
+  isDeleted?: boolean;
 }
 
-export type CategoryModel = Model<ICategory, Record<string, unknown>>
+export type CategoryModel = Model<ICategory, Record<string, unknown>>;
