@@ -6,6 +6,7 @@ import { Service } from "./service.model";
 import { JwtPayload } from "jsonwebtoken";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { User } from "../user/user.model";
+import { Review } from "../review/review.model";
 
 // import { FilterQuery } from "mongoose";
 
@@ -151,8 +152,26 @@ const getSingleServiceFromDB = async (id: string) => {
     .populate("provider", "name totalReview avgRating totalJobs");
 };
 
+const getServiceReviewsFromDB = async (id: string) => {
+  const reviewQuery = new QueryBuilder(
+    Review.find({ service: id })
+      .select("customer rating comment createdAt")
+      .populate("customer", "name profile"),
+    {}
+  )
+    .paginate()
+    .sort();
+
+  const [reviews, pagination] = await Promise.all([
+    reviewQuery.modelQuery.lean().exec(),
+    reviewQuery.getPaginationInfo(),
+  ]);
+  return { reviews, pagination };
+};
+
 export const ServiceService = {
   createServiceToDB,
   getAllServiceFromDB,
   getSingleServiceFromDB,
+  getServiceReviewsFromDB,
 };

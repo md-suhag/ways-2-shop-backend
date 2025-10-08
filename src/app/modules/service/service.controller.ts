@@ -85,8 +85,20 @@ const getSingleService = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getServiceReviews = catchAsync(async (req: Request, res: Response) => {
+  const result = await ServiceService.getServiceReviewsFromDB(req.params.id);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Service reviews retrieved successfully",
+    data: result.reviews,
+    pagination: result.pagination,
+  });
+});
+
 export const ServiceController = {
   createService,
   getAllService,
   getSingleService,
+  getServiceReviews,
 };
