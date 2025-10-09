@@ -22,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //file retrieve
 app.use(express.static("uploads"));
+app.use("/public", express.static("public"));
 
 // Session middleware (must be before passport initialization)
 app.use(
