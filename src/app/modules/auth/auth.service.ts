@@ -314,10 +314,6 @@ const resendVerificationEmailToDB = async (email: string) => {
     );
   }
 
-  if (existingUser?.isVerified) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User is already verified!");
-  }
-
   // Generate OTP and prepare email
   const otp = generateOTP();
   const emailValues = {
@@ -326,8 +322,8 @@ const resendVerificationEmailToDB = async (email: string) => {
     email: existingUser.email,
   };
 
-  const accountEmailTemplate = emailTemplate.createAccount(emailValues);
-  emailHelper.sendEmail(accountEmailTemplate);
+  const resendOtpEmailTemplate = emailTemplate.resendOtpEmail(emailValues);
+  emailHelper.sendEmail(resendOtpEmailTemplate);
 
   // Update user with authentication details
   const authentication = {

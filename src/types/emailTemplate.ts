@@ -15,3 +15,8 @@ export interface IContactUs {
   subject: string;
   message: string;
 }
+export interface ISendOtp {
+  email: string;
+  otp: number;
+  name: string;
+}

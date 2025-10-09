@@ -3,6 +3,7 @@ import {
   IContactUs,
   ICreateAccount,
   IResetPassword,
+  ISendOtp,
 } from "../types/emailTemplate";
 
 const createAccount = (values: ICreateAccount) => {
@@ -61,6 +62,44 @@ const resetPassword = (values: IResetPassword) => {
   return data;
 };
 
+const resendOtpEmail = (values: ISendOtp) => {
+  const data = {
+    to: values.email,
+    subject: "Your new OTP code - ways2shop",
+    html: `
+      <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 50px; padding: 20px; color: #555;">
+        <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+
+          <!-- Logo -->
+          <img src="https://i.postimg.cc/g0ntw69p/logo.png" alt="ways2shop Logo" style="display: block; margin: 0 auto 20px; width:150px" />
+
+          <!-- Greeting -->
+          <h2 style="color: #D0A933; font-size: 24px; margin-bottom: 20px;">Hey, ${values.name}!</h2>
+
+          <!-- Message -->
+          <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+            You’ve requested a new verification code to confirm your email for <strong>ways2shop</strong>.
+          </p>
+
+          <!-- OTP Section -->
+          <div style="text-align: center;">
+            <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Here’s your new one-time code:</p>
+            <div style="background-color: #D0A933; width: 120px; padding: 10px; text-align: center; border-radius: 8px; color: #fff; font-size: 25px; letter-spacing: 2px; margin: 20px auto;">${values.otp}</div>
+            <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">This code is valid for 3 minutes.</p>
+          </div>
+
+          <!-- Footer -->
+          <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px;">If you didn’t request a new code, please ignore this email.</p>
+          <p style="color: #999; font-size: 12px; text-align: center;">&copy; 2025 ways2shop. All rights reserved.</p>
+
+        </div>
+      </body>
+    `,
+  };
+
+  return data;
+};
+
 const contactUs = (values: IContactUs) => {
   const data = {
     to: `${config.super_admin.email}`,
@@ -92,13 +131,7 @@ const contactUs = (values: IContactUs) => {
   return data;
 };
 
-interface IDeleteAccount {
-  email: string;
-  otp: number;
-  name: string;
-}
-
-const deleteAccountOtp = (values: IDeleteAccount) => {
+const deleteAccountOtp = (values: ISendOtp) => {
   const data = {
     to: values.email,
     subject: "Confirm account deletion — One-time code",
@@ -145,4 +178,5 @@ export const emailTemplate = {
   resetPassword,
   contactUs,
   deleteAccountOtp,
+  resendOtpEmail,
 };
