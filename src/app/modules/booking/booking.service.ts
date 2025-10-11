@@ -94,10 +94,34 @@ const getCustomerBookings = async (
   ]);
   return { bookings, pagination };
 };
+const getProviderBookings = async (
+  user: JwtPayload,
+  query: Record<string, unknown>
+) => {
+  const bookingQuery = new QueryBuilder(
+    Booking.find({ provider: user.id })
+      .select("provider bookingDate startTime")
+      .populate({
+        path: "provider",
+        select: "name  profile location.locationName",
+      }),
+    query
+  )
+    .paginate()
+    .filter()
+    .sort();
+
+  const [bookings, pagination] = await Promise.all([
+    bookingQuery.modelQuery.lean(),
+    bookingQuery.getPaginationInfo(),
+  ]);
+  return { bookings, pagination };
+};
 
 export const BookingServices = {
   createBooking,
   getSingleBooking,
   updateBookingStatus,
   getCustomerBookings,
+  getProviderBookings,
 };

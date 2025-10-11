@@ -20,6 +20,11 @@ router.get(
   auth(USER_ROLES.CUSTOMER),
   BookingController.getCustomerBookings
 );
+router.get(
+  "/provider",
+  auth(USER_ROLES.PROVIDER),
+  BookingController.getProviderBookings
+);
 
 router.get("/:id", auth(), BookingController.getSingleBooking);
 router.patch(
