@@ -8,6 +8,7 @@ import QueryBuilder from "../../builder/QueryBuilder";
 import { Booking } from "../booking/booking.model";
 import { User } from "../user/user.model";
 import { IsActive } from "../user/user.interface";
+import { Category } from "../category/category.model";
 
 const contactUs = async (payload: IContactUs) => {
   const contactUsTemplate = emailTemplate.contactUs(payload);
@@ -73,4 +74,138 @@ const updateUserStatus = async (id: string, isActive: IsActive) => {
   return result;
 };
 
-export const AdminServices = { contactUs, getAllUsers, updateUserStatus };
+const getAllCategories = async (query: Record<string, unknown>) => {
+  const { page = 1, limit = 10, searchTerm = "", status } = query;
+
+  const matchStage: any = {};
+
+  //  Search by name
+  if (searchTerm) {
+    matchStage.name = { $regex: searchTerm, $options: "i" };
+  }
+
+  //  Filter by status
+  if (status) {
+    matchStage.status = status;
+  }
+
+  const pipeline: any[] = [
+    { $match: matchStage },
+
+    //  Lookup related services
+    {
+      $lookup: {
+        from: "services",
+        localField: "_id",
+        foreignField: "categories",
+        as: "services",
+      },
+    },
+
+    //  Extract providerIds from services
+    {
+      $addFields: {
+        providerIds: {
+          $map: { input: "$services", as: "s", in: "$$s.provider" },
+        },
+        serviceIds: {
+          $map: { input: "$services", as: "s", in: "$$s._id" },
+        },
+      },
+    },
+
+    //  Lookup bookings for these services
+    {
+      $lookup: {
+        from: "bookings",
+        let: { serviceIds: "$serviceIds" },
+        pipeline: [
+          { $match: { $expr: { $in: ["$service", "$$serviceIds"] } } },
+          { $project: { _id: 1 } }, // optimization
+        ],
+        as: "bookings",
+      },
+    },
+
+    //  Add counts
+    {
+      $addFields: {
+        totalProviders: {
+          $size: { $ifNull: [{ $setUnion: ["$providerIds", []] }, []] },
+        },
+        totalJobs: { $size: "$bookings" },
+      },
+    },
+
+    //  Keep only necessary fields
+    {
+      $project: {
+        name: 1,
+        image: 1,
+        createdAt: 1,
+        status: 1,
+        totalProviders: 1,
+        totalJobs: 1,
+      },
+    },
+
+    //  Sort by latest created
+    { $sort: { createdAt: -1 } },
+
+    //  Pagination
+    {
+      $facet: {
+        metadata: [
+          { $count: "total" },
+          {
+            $addFields: {
+              page: Number(page),
+              limit: Number(limit),
+            },
+          },
+        ],
+        data: [
+          { $skip: (Number(page) - 1) * Number(limit) },
+          { $limit: Number(limit) },
+        ],
+      },
+    },
+
+    // Flatten output and add totalPages
+    {
+      $project: {
+        data: 1,
+        metadata: {
+          $let: {
+            vars: {
+              meta: {
+                $ifNull: [
+                  { $arrayElemAt: ["$metadata", 0] },
+                  { total: 0, page, limit },
+                ],
+              },
+            },
+            in: {
+              total: "$$meta.total",
+              page: "$$meta.page",
+              limit: "$$meta.limit",
+              totalPages: {
+                $ceil: { $divide: ["$$meta.total", "$$meta.limit"] },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const result = await Category.aggregate(pipeline);
+  return result[0];
+};
+
+export const AdminServices = {
+  contactUs,
+  getAllUsers,
+  updateUserStatus,
+  getAllCategories,
+};

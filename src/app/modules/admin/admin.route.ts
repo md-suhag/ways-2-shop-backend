@@ -25,5 +25,6 @@ router.patch(
   validateRequest(AdminValidations.updateUserStatusZodSchema),
   AdminController.updateUserStatus
 );
+router.get("/categories", AdminController.getAllCategories);
 
 export const AdminRoutes = router;

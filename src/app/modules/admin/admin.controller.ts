@@ -37,4 +37,19 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const AdminController = { contactUs, getAllUsers, updateUserStatus };
+const getAllCategories = catchAsync(async (req: Request, res: Response) => {
+  const result = await AdminServices.getAllCategories(req.query);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Categories retrieved successfully",
+    data: result,
+  });
+});
+
+export const AdminController = {
+  contactUs,
+  getAllUsers,
+  updateUserStatus,
+  getAllCategories,
+};
