@@ -17,5 +17,10 @@ router.post(
 );
 
 router.get("/:id", auth(), BookingController.getSingleBooking);
-
+router.patch(
+  "/:id",
+  auth(USER_ROLES.CUSTOMER),
+  validateRequest(BookingValidations.updateBookingStatusZodSchema),
+  BookingController.updateBookingStatus
+);
 export const BookingRoutes = router;

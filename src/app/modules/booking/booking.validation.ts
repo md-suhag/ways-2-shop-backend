@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { IBookingStatus } from "./booking.interface";
 
 const createBookingZodSchema = z.object({
   body: z.object({
@@ -33,4 +34,14 @@ const createBookingZodSchema = z.object({
   }),
 });
 
-export const BookingValidations = { createBookingZodSchema };
+const updateBookingStatusZodSchema = z.object({
+  body: z.object({
+    status: z.nativeEnum(IBookingStatus, {
+      required_error: "Status is required",
+    }),
+  }),
+});
+export const BookingValidations = {
+  createBookingZodSchema,
+  updateBookingStatusZodSchema,
+};

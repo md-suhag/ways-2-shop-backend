@@ -38,5 +38,22 @@ const getSingleBooking = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
+  const result = await BookingServices.updateBookingStatus(
+    req.params.id,
+    req.user as JwtPayload,
+    req.body
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Booking status updated successfully",
+    data: result,
+  });
+});
 
-export const BookingController = { createBooking, getSingleBooking };
+export const BookingController = {
+  createBooking,
+  getSingleBooking,
+  updateBookingStatus,
+};

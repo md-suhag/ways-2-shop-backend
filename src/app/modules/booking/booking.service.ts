@@ -3,7 +3,7 @@ import ApiError from "../../../errors/ApiErrors";
 import { Service } from "../service/service.model";
 import { calculatePrice } from "../../../util/calculatePrice";
 import { Booking } from "./booking.model";
-import { IBooking } from "./booking.interface";
+import { IBooking, IBookingStatus } from "./booking.interface";
 import { JwtPayload } from "jsonwebtoken";
 
 const createBooking = async (payload: IBooking, user: JwtPayload) => {
@@ -38,4 +38,36 @@ const getSingleBooking = async (id: string) => {
   return booking;
 };
 
-export const BookingServices = { createBooking, getSingleBooking };
+const updateBookingStatus = async (
+  id: string,
+  user: JwtPayload,
+  payload: IBookingStatus
+) => {
+  const booking = await Booking.findById(id);
+
+  if (!booking) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Booking not found");
+  }
+  if (booking.customer.toString() !== user.id) {
+    throw new ApiError(
+      StatusCodes.UNAUTHORIZED,
+      "You are not authorized to update this booking"
+    );
+  }
+
+  if (booking.status === IBookingStatus.COMPLETED) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Booking is already completed");
+  }
+
+  return await Booking.findByIdAndUpdate(
+    id,
+    { payload },
+    { new: true, runValidators: true }
+  ).lean();
+};
+
+export const BookingServices = {
+  createBooking,
+  getSingleBooking,
+  updateBookingStatus,
+};
