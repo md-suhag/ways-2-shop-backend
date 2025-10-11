@@ -14,4 +14,15 @@ const contactUs = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const AdminController = { contactUs };
+const getAllUsers = catchAsync(async (req: Request, res: Response) => {
+  const result = await AdminServices.getAllUsers(req.query);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Users retrieved successfully",
+    data: result.users,
+    pagination: result.pagination,
+  });
+});
+
+export const AdminController = { contactUs, getAllUsers };

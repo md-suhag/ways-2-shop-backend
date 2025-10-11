@@ -3,6 +3,7 @@ import { AdminController } from "./admin.controller";
 import validateRequest from "../../middlewares/validateRequest";
 import { AdminValidations } from "./admin.validation";
 import auth from "../../middlewares/auth";
+import { USER_ROLES } from "../../../enums/user";
 
 const router = express.Router();
 
@@ -11,6 +12,12 @@ router.post(
   auth(),
   validateRequest(AdminValidations.contactUsZodSchema),
   AdminController.contactUs
+);
+
+router.get(
+  "/users",
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  AdminController.getAllUsers
 );
 
 export const AdminRoutes = router;
