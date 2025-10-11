@@ -34,7 +34,7 @@ const getSingleBooking = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
-    message: "Booking retreived successfully",
+    message: "Booking retrieved successfully",
     data: result,
   });
 });
@@ -52,8 +52,23 @@ const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getCustomerBookings = catchAsync(async (req: Request, res: Response) => {
+  const result = await BookingServices.getCustomerBookings(
+    req.user as JwtPayload,
+    req.query
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Customer Bookings retrieved successfully",
+    data: result.bookings,
+    pagination: result.pagination,
+  });
+});
+
 export const BookingController = {
   createBooking,
   getSingleBooking,
   updateBookingStatus,
+  getCustomerBookings,
 };

@@ -15,6 +15,11 @@ router.post(
   validateRequest(BookingValidations.createBookingZodSchema),
   BookingController.createBooking
 );
+router.get(
+  "/customer",
+  auth(USER_ROLES.CUSTOMER),
+  BookingController.getCustomerBookings
+);
 
 router.get("/:id", auth(), BookingController.getSingleBooking);
 router.patch(
@@ -23,4 +28,5 @@ router.patch(
   validateRequest(BookingValidations.updateBookingStatusZodSchema),
   BookingController.updateBookingStatus
 );
+
 export const BookingRoutes = router;

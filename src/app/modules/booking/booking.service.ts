@@ -5,6 +5,7 @@ import { calculatePrice } from "../../../util/calculatePrice";
 import { Booking } from "./booking.model";
 import { IBooking, IBookingStatus } from "./booking.interface";
 import { JwtPayload } from "jsonwebtoken";
+import QueryBuilder from "../../builder/QueryBuilder";
 
 const createBooking = async (payload: IBooking, user: JwtPayload) => {
   const serviceData = await Service.findById(payload.service);
@@ -66,8 +67,37 @@ const updateBookingStatus = async (
   ).lean();
 };
 
+const getCustomerBookings = async (
+  user: JwtPayload,
+  query: Record<string, unknown>
+) => {
+  const bookingQuery = new QueryBuilder(
+    Booking.find({ customer: user.id })
+      .select("provider price bookingDate startTime txId")
+      .populate({
+        path: "provider",
+        select: "name businessCategory profile location.locationName",
+        populate: {
+          path: "businessCategory",
+          select: "name",
+        },
+      }),
+    query
+  )
+    .paginate()
+    .filter()
+    .sort();
+
+  const [bookings, pagination] = await Promise.all([
+    bookingQuery.modelQuery.lean(),
+    bookingQuery.getPaginationInfo(),
+  ]);
+  return { bookings, pagination };
+};
+
 export const BookingServices = {
   createBooking,
   getSingleBooking,
   updateBookingStatus,
+  getCustomerBookings,
 };
