@@ -23,4 +23,19 @@ const createBooking = async (payload: IBooking, user: JwtPayload) => {
   return booking;
 };
 
-export const BookingServices = { createBooking };
+const getSingleBooking = async (id: string) => {
+  const booking = await Booking.findById(id)
+    .populate({
+      path: "provider",
+      select: "name businessCategory profile location.locationName",
+      populate: {
+        path: "businessCategory",
+        select: "name",
+      },
+    })
+
+    .lean();
+  return booking;
+};
+
+export const BookingServices = { createBooking, getSingleBooking };
