@@ -7,6 +7,7 @@ import { IContactUs } from "../../../types/emailTemplate";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { Booking } from "../booking/booking.model";
 import { User } from "../user/user.model";
+import { IsActive } from "../user/user.interface";
 
 const contactUs = async (payload: IContactUs) => {
   const contactUsTemplate = emailTemplate.contactUs(payload);
@@ -63,4 +64,13 @@ const getAllUsers = async (query: Record<string, unknown>) => {
   return { users: usersWithBookingStatus, pagination };
 };
 
-export const AdminServices = { contactUs, getAllUsers };
+const updateUserStatus = async (id: string, isActive: IsActive) => {
+  const result = await User.findByIdAndUpdate(
+    id,
+    { isActive },
+    { new: true, runValidators: true }
+  ).lean();
+  return result;
+};
+
+export const AdminServices = { contactUs, getAllUsers, updateUserStatus };

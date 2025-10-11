@@ -19,5 +19,11 @@ router.get(
   auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   AdminController.getAllUsers
 );
+router.patch(
+  "/users/:id/status",
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  validateRequest(AdminValidations.updateUserStatusZodSchema),
+  AdminController.updateUserStatus
+);
 
 export const AdminRoutes = router;
