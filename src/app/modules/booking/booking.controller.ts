@@ -92,6 +92,20 @@ const getUpcomingBookings = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getCompletedBookings = catchAsync(async (req: Request, res: Response) => {
+  const result = await BookingServices.getCompletedBookings(
+    req.user as JwtPayload,
+    req.query
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Provider Completed Bookings retrieved successfully",
+    data: result.bookings,
+    pagination: result.pagination,
+  });
+});
+
 export const BookingController = {
   createBooking,
   getSingleBooking,
@@ -99,4 +113,5 @@ export const BookingController = {
   getCustomerBookings,
   getProviderBookings,
   getUpcomingBookings,
+  getCompletedBookings,
 };

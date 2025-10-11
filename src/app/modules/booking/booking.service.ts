@@ -144,6 +144,36 @@ const getUpcomingBookings = async (
   ]);
   return { bookings, pagination };
 };
+const getCompletedBookings = async (
+  user: JwtPayload,
+  query: Record<string, unknown>
+) => {
+  const bookingQuery = new QueryBuilder(
+    Booking.find({
+      provider: user.id,
+      status: IBookingStatus.COMPLETED,
+    })
+      .select("provider")
+      .populate({
+        path: "provider",
+        select: "name  profile location.locationName",
+      })
+      .populate({
+        path: "review",
+        select: "rating -booking -_id",
+      }),
+    query
+  )
+    .paginate()
+    .filter()
+    .sort();
+
+  const [bookings, pagination] = await Promise.all([
+    bookingQuery.modelQuery.lean(),
+    bookingQuery.getPaginationInfo(),
+  ]);
+  return { bookings, pagination };
+};
 
 export const BookingServices = {
   createBooking,
@@ -152,4 +182,5 @@ export const BookingServices = {
   getCustomerBookings,
   getProviderBookings,
   getUpcomingBookings,
+  getCompletedBookings,
 };

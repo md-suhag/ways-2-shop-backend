@@ -55,7 +55,13 @@ const bookingSchema = new Schema<IBooking, BookingModel>(
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
+bookingSchema.virtual("review", {
+  ref: "Review",
+  localField: "_id",
+  foreignField: "booking",
+  justOne: true,
+});
 export const Booking = model<IBooking, BookingModel>("Booking", bookingSchema);
