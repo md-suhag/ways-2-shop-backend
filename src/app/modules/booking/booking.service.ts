@@ -117,6 +117,33 @@ const getProviderBookings = async (
   ]);
   return { bookings, pagination };
 };
+const getUpcomingBookings = async (
+  user: JwtPayload,
+  query: Record<string, unknown>
+) => {
+  const now = new Date();
+  const bookingQuery = new QueryBuilder(
+    Booking.find({
+      provider: user.id,
+      startTime: { $gte: now },
+    })
+      .select("provider startTime")
+      .populate({
+        path: "provider",
+        select: "name  profile location.locationName",
+      }),
+    query
+  )
+    .paginate()
+    .filter()
+    .sort();
+
+  const [bookings, pagination] = await Promise.all([
+    bookingQuery.modelQuery.lean(),
+    bookingQuery.getPaginationInfo(),
+  ]);
+  return { bookings, pagination };
+};
 
 export const BookingServices = {
   createBooking,
@@ -124,4 +151,5 @@ export const BookingServices = {
   updateBookingStatus,
   getCustomerBookings,
   getProviderBookings,
+  getUpcomingBookings,
 };

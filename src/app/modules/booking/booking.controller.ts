@@ -78,6 +78,19 @@ const getProviderBookings = catchAsync(async (req: Request, res: Response) => {
     pagination: result.pagination,
   });
 });
+const getUpcomingBookings = catchAsync(async (req: Request, res: Response) => {
+  const result = await BookingServices.getUpcomingBookings(
+    req.user as JwtPayload,
+    req.query
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Provider Upcoming Bookings retrieved successfully",
+    data: result.bookings,
+    pagination: result.pagination,
+  });
+});
 
 export const BookingController = {
   createBooking,
@@ -85,4 +98,5 @@ export const BookingController = {
   updateBookingStatus,
   getCustomerBookings,
   getProviderBookings,
+  getUpcomingBookings,
 };
