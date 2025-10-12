@@ -47,9 +47,20 @@ const getAllCategories = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllPackages = catchAsync(async (req: Request, res: Response) => {
+  const result = await AdminServices.getAllPackagesFromDB();
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "All Packages retrieved successfully",
+    data: result,
+  });
+});
+
 export const AdminController = {
   contactUs,
   getAllUsers,
   updateUserStatus,
   getAllCategories,
+  getAllPackages,
 };

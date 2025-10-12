@@ -27,4 +27,10 @@ router.patch(
 );
 router.get("/categories", AdminController.getAllCategories);
 
+router.get(
+  "/packages",
+  auth(USER_ROLES.SUPER_ADMIN),
+  AdminController.getAllPackages
+);
+
 export const AdminRoutes = router;

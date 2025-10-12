@@ -9,6 +9,7 @@ import { Booking } from "../booking/booking.model";
 import { User } from "../user/user.model";
 import { IsActive } from "../user/user.interface";
 import { Category } from "../category/category.model";
+import { Package } from "../package/package.model";
 
 const contactUs = async (payload: IContactUs) => {
   const contactUsTemplate = emailTemplate.contactUs(payload);
@@ -203,9 +204,15 @@ const getAllCategories = async (query: Record<string, unknown>) => {
   return result[0];
 };
 
+const getAllPackagesFromDB = async () => {
+  const packages = await Package.find().lean();
+  return packages;
+};
+
 export const AdminServices = {
   contactUs,
   getAllUsers,
   updateUserStatus,
   getAllCategories,
+  getAllPackagesFromDB,
 };

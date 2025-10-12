@@ -15,7 +15,7 @@ const createPackage = async (payload: Partial<IPackage>) => {
 };
 
 const getAllActivePackagesFromDB = async () => {
-  const packages = await Package.find({ isActive: true });
+  const packages = await Package.find({ isActive: true }).lean();
   return packages;
 };
 
