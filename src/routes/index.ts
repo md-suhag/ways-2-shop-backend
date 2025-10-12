@@ -14,6 +14,7 @@ import { NotificationRoutes } from "../app/modules/notification/notification.rou
 import { DisclaimerRoutes } from "../app/modules/disclaimer/disclaimer.route";
 import { RecentServicesRoutes } from "../app/modules/recentServices/recent-services.route";
 import { SubscriptionRoutes } from "../app/modules/subscription/subscription.routes";
+import { PackageRoutes } from "../app/modules/package/package.routes";
 
 const router = express.Router();
 
@@ -33,6 +34,7 @@ const apiRoutes = [
   { path: "/recent-services", route: RecentServicesRoutes },
   { path: "/disclaimers", route: DisclaimerRoutes },
   { path: "/subscriptions", route: SubscriptionRoutes },
+  { path: "/packages", route: PackageRoutes },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

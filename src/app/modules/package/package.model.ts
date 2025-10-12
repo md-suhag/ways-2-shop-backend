@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { IPackage, PackageModel } from "./package.interface";
+import { BillingCycle, IPackage, PackageModel } from "./package.interface";
 
 const packageSchema = new Schema<IPackage, PackageModel>(
   {
@@ -15,6 +15,12 @@ const packageSchema = new Schema<IPackage, PackageModel>(
       required: true,
     },
     durationInDays: { type: Number, required: true },
+    billingCycle: {
+      type: String,
+      enum: Object.values(BillingCycle),
+      required: true,
+      default: BillingCycle.MONTHLY,
+    },
     googleProductId: { type: String },
     appleProductId: { type: String },
     features: [{ type: String }],
