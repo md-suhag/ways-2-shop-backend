@@ -1,8 +1,10 @@
+import { StatusCodes } from "http-status-codes";
 import { USER_ROLES } from "../../../enums/user";
+import ApiError from "../../../errors/ApiErrors";
 import { Subscription } from "../subscription/subscription.model";
 import { User } from "../user/user.model";
 
-export const getAnalyticsOverview = async () => {
+const getAnalyticsOverview = async () => {
   const now = new Date();
 
   const todayStart = new Date(now);
@@ -118,4 +120,171 @@ export const getAnalyticsOverview = async () => {
   };
 };
 
-export const AnalyticsService = { getAnalyticsOverview };
+const getMonthlyRevenueUsers = async (query: Record<string, any>) => {
+  const startYear = Number(query.startYear);
+  const startMonth = Number(query.startMonth);
+  const endYear = Number(query.endYear);
+  const endMonth = Number(query.endMonth);
+
+  if (
+    !startYear ||
+    !startMonth ||
+    !endYear ||
+    !endMonth ||
+    startMonth < 1 ||
+    startMonth > 12 ||
+    endMonth < 1 ||
+    endMonth > 12
+  ) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Invalid or missing query parameters: startYear, startMonth, endYear, endMonth are required and must be valid numbers."
+    );
+  }
+
+  // 1. Build date range
+  const startDate = new Date(startYear, startMonth - 1, 1);
+  const endDate = new Date(endYear, endMonth, 0, 23, 59, 59, 999);
+
+  //  2. Aggregations
+  const [revenueByMonth, customersByMonth, providersByMonth] =
+    await Promise.all([
+      //  Subscriptions: only active or expired
+      Subscription.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+            status: { $in: ["active", "expired"] },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+            },
+            totalRevenue: { $sum: "$priceAtPurchase" },
+          },
+        },
+      ]),
+
+      //  Customers
+      User.aggregate([
+        {
+          $match: {
+            role: USER_ROLES.CUSTOMER,
+            createdAt: { $gte: startDate, $lte: endDate },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+            },
+            totalCustomers: { $sum: 1 },
+          },
+        },
+      ]),
+
+      //  Providers
+      User.aggregate([
+        {
+          $match: {
+            role: USER_ROLES.PROVIDER,
+            createdAt: { $gte: startDate, $lte: endDate },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+            },
+            totalProviders: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+  //  3. Merge data into one object
+  const merged: Record<string, any> = {};
+  const makeKey = (y: number, m: number) =>
+    `${y}-${String(m).padStart(2, "0")}`;
+
+  for (const r of revenueByMonth) {
+    const key = makeKey(r._id.year, r._id.month);
+    merged[key] = {
+      month: key,
+      revenue: r.totalRevenue,
+      customers: 0,
+      providers: 0,
+    };
+  }
+
+  for (const c of customersByMonth) {
+    const key = makeKey(c._id.year, c._id.month);
+    merged[key] = {
+      ...(merged[key] || {
+        month: key,
+        revenue: 0,
+        customers: 0,
+        providers: 0,
+      }),
+      customers: c.totalCustomers,
+    };
+  }
+
+  for (const p of providersByMonth) {
+    const key = makeKey(p._id.year, p._id.month);
+    merged[key] = {
+      ...(merged[key] || {
+        month: key,
+        revenue: 0,
+        customers: 0,
+        providers: 0,
+      }),
+      providers: p.totalProviders,
+    };
+  }
+
+  // 4. Generate months between range (fill with zeros)
+  const months: {
+    month: string;
+    revenue: number;
+    customers: number;
+    providers: number;
+  }[] = [];
+  let current = new Date(startYear, startMonth - 1, 1);
+
+  while (current <= endDate) {
+    const y = current.getFullYear();
+    const m = current.getMonth() + 1;
+    const key = makeKey(y, m);
+
+    months.push({
+      month: key,
+      revenue: merged[key]?.revenue || 0,
+      customers: merged[key]?.customers || 0,
+      providers: merged[key]?.providers || 0,
+    });
+
+    current.setMonth(current.getMonth() + 1);
+  }
+
+  //  5. Format for display (Jan 2025, Feb 2025, etc.)
+  const formatted = months.map((item) => ({
+    ...item,
+    label: new Date(item.month + "-01").toLocaleString("en-US", {
+      month: "short",
+      year: "numeric",
+    }),
+  }));
+
+  return formatted;
+};
+
+export const AnalyticsService = {
+  getAnalyticsOverview,
+  getMonthlyRevenueUsers,
+};

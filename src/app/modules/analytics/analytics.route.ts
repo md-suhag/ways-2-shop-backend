@@ -10,4 +10,10 @@ router.get(
   AnalyticsController.getAnalyticsOverview
 );
 
+router.get(
+  "/monthly-revenue-users",
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  AnalyticsController.getMonthlyRevenueUsers
+);
+
 export const AnalyticsRoutes = router;
