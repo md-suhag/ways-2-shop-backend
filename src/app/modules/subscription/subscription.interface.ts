@@ -24,6 +24,7 @@ export interface ISubscription {
   endDate: Date;
   isActive: boolean;
   autoRenew: boolean;
+  priceAtPurchase: number;
   status: "pending" | "active" | "expired" | "cancelled";
 }
 

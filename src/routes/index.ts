@@ -15,6 +15,7 @@ import { DisclaimerRoutes } from "../app/modules/disclaimer/disclaimer.route";
 import { RecentServicesRoutes } from "../app/modules/recentServices/recent-services.route";
 import { SubscriptionRoutes } from "../app/modules/subscription/subscription.routes";
 import { PackageRoutes } from "../app/modules/package/package.routes";
+import { AnalyticsRoutes } from "../app/modules/analytics/analytics.route";
 
 const router = express.Router();
 
@@ -35,6 +36,7 @@ const apiRoutes = [
   { path: "/disclaimers", route: DisclaimerRoutes },
   { path: "/subscriptions", route: SubscriptionRoutes },
   { path: "/packages", route: PackageRoutes },
+  { path: "/analytics", route: AnalyticsRoutes },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

@@ -2,7 +2,7 @@ import { google } from "googleapis";
 import { Package } from "../app/modules/package/package.model";
 import { Subscription } from "../app/modules/subscription/subscription.model";
 
-const keyFilePath = "config/google-service-account.json"; // Your credentials file
+const keyFilePath = "config/google-service-account.json";
 
 const auth = new google.auth.GoogleAuth({
   keyFile: keyFilePath,
@@ -19,7 +19,7 @@ export const verifyGooglePurchase = async (
   productId: string,
   userId: string
 ) => {
-  const packageName = "com.yourapp.package"; // Replace with your  package name
+  const packageName = "com.yourapp.package"; // Replace with your actual package name
 
   try {
     const res = await androidPublisher.purchases.subscriptions.get({
@@ -30,7 +30,6 @@ export const verifyGooglePurchase = async (
 
     const purchase = res.data;
 
-    //  Check validity of required fields
     if (!purchase.startTimeMillis || !purchase.expiryTimeMillis) {
       throw new Error("Missing purchase time data");
     }
@@ -48,12 +47,14 @@ export const verifyGooglePurchase = async (
 
     const startDate = new Date(startMillis);
     const endDate = new Date(expiryMillis);
-
     const isActive = expiryMillis > Date.now();
+
+    const pkg = await Package.findOne({ googleProductId: productId });
+    if (!pkg) throw new Error("Package not found for productId");
 
     await Subscription.create({
       user: userId,
-      package: (await Package.findOne({ googleProductId: productId }))?._id,
+      package: pkg._id,
       platform: "google",
       transactionId: purchase.orderId,
       purchaseToken,
@@ -61,6 +62,7 @@ export const verifyGooglePurchase = async (
       endDate,
       isActive,
       status: isActive ? "active" : "expired",
+      priceAtPurchase: pkg.price,
     });
 
     return purchase;

@@ -13,7 +13,6 @@ const subscriptionSchema = new Schema<ISubscription, SubscriptionModel>(
       ref: "Package",
       required: true,
     },
-
     platform: { type: String, enum: ["google", "apple"], required: true },
     transactionId: { type: String, required: true, unique: true },
     purchaseToken: { type: String },
@@ -22,6 +21,7 @@ const subscriptionSchema = new Schema<ISubscription, SubscriptionModel>(
     endDate: { type: Date, required: true },
     isActive: { type: Boolean, default: true },
     autoRenew: { type: Boolean, default: true },
+    priceAtPurchase: { type: Number, required: true },
     status: {
       type: String,
       enum: ["pending", "active", "expired", "cancelled"],

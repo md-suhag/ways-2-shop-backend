@@ -24,7 +24,6 @@ export const verifyApplePurchase = async (
   }
 
   const latest = data.latest_receipt_info?.[0];
-
   if (
     !latest ||
     !latest.product_id ||
@@ -35,7 +34,6 @@ export const verifyApplePurchase = async (
     throw new Error("Incomplete Apple receipt data");
   }
 
-  //  Safe numeric conversion
   const purchaseMillis = Number(latest.purchase_date_ms);
   const expiryMillis = Number(latest.expires_date_ms);
 
@@ -47,12 +45,12 @@ export const verifyApplePurchase = async (
   const endDate = new Date(expiryMillis);
   const isActive = expiryMillis > Date.now();
 
-  //  Save verified subscription
+  const pkg = await Package.findOne({ appleProductId: latest.product_id });
+  if (!pkg) throw new Error("Package not found for product_id");
+
   await Subscription.create({
     user: userId,
-    package: (
-      await Package.findOne({ appleProductId: latest.product_id })
-    )?._id,
+    package: pkg._id,
     platform: "apple",
     transactionId: latest.transaction_id,
     receiptData,
@@ -60,6 +58,7 @@ export const verifyApplePurchase = async (
     endDate,
     isActive,
     status: isActive ? "active" : "expired",
+    priceAtPurchase: pkg.price,
   });
 
   return latest;
