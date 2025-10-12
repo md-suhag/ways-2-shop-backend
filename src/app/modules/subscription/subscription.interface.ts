@@ -1,16 +1,30 @@
-import { Model, Types } from 'mongoose';
+import { Model, Types } from "mongoose";
+
+export interface IVerifySubscription {
+  platform: SubscriptionPlatform;
+  purchaseToken: any;
+  receiptData: any;
+  productId: any;
+  userId: string;
+}
+
+export enum SubscriptionPlatform {
+  GOOGLE = "google",
+  APPLE = "apple",
+}
 
 export interface ISubscription {
-    customerId: string;
-    price: number;
-    user: Types.ObjectId;
-    package: Types.ObjectId;
-    trxId: string;
-    remaining: number;
-    subscriptionId: string;
-    status: 'expired' | 'active' | 'cancel';
-    currentPeriodStart: string;
-    currentPeriodEnd: string;
+  user: Types.ObjectId;
+  package: Types.ObjectId;
+  platform: SubscriptionPlatform;
+  transactionId: string;
+  purchaseToken?: string; // Google
+  receiptData?: string; // Apple
+  startDate: Date;
+  endDate: Date;
+  isActive: boolean;
+  autoRenew: boolean;
+  status: "pending" | "active" | "expired" | "cancelled";
 }
 
 export type SubscriptionModel = Model<ISubscription, Record<string, unknown>>;
