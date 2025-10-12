@@ -43,6 +43,7 @@ async function main() {
     socketHelper.socket(io);
 
     global.io = io;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     errorLogger.error(colors.red("🤢 Failed to connect Database"));
     process.exit(1);

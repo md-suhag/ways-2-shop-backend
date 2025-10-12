@@ -2,6 +2,7 @@ import axios from "axios";
 import { Subscription } from "../app/modules/subscription/subscription.model";
 import { Package } from "../app/modules/package/package.model";
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET!;
 
 export const verifyApplePurchase = async (

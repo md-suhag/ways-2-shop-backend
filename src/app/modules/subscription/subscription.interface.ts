@@ -2,9 +2,9 @@ import { Model, Types } from "mongoose";
 
 export interface IVerifySubscription {
   platform: SubscriptionPlatform;
-  purchaseToken: any;
-  receiptData: any;
-  productId: any;
+  purchaseToken: string;
+  receiptData: string;
+  productId: string;
   userId: string;
 }
 

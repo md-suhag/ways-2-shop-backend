@@ -44,7 +44,7 @@ const loginUserFromDB = async (payload: ILoginData) => {
     );
   }
   //check match password
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   if (
     password &&
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

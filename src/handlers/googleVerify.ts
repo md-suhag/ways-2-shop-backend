@@ -66,6 +66,7 @@ export const verifyGooglePurchase = async (
     });
 
     return purchase;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     console.error("Google verification failed:", err.message);
     throw new Error("Invalid Google purchase");

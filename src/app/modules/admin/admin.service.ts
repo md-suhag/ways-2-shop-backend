@@ -78,6 +78,7 @@ const updateUserStatus = async (id: string, isActive: IsActive) => {
 const getAllCategories = async (query: Record<string, unknown>) => {
   const { page = 1, limit = 10, searchTerm = "", status } = query;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const matchStage: any = {};
 
   //  Search by name
@@ -90,6 +91,7 @@ const getAllCategories = async (query: Record<string, unknown>) => {
     matchStage.status = status;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pipeline: any[] = [
     { $match: matchStage },
 

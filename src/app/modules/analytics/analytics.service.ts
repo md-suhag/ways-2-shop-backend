@@ -17,6 +17,7 @@ const getAnalyticsOverview = async () => {
   last30Days.setDate(now.getDate() - 30);
 
   const getRevenue = async (startDate?: Date) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const matchStage: any = {};
     if (startDate) matchStage.createdAt = { $gte: startDate };
 
@@ -120,7 +121,7 @@ const getAnalyticsOverview = async () => {
   };
 };
 
-const getMonthlyRevenueUsers = async (query: Record<string, any>) => {
+const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
   const startYear = Number(query.startYear);
   const startMonth = Number(query.startMonth);
   const endYear = Number(query.endYear);
@@ -208,6 +209,7 @@ const getMonthlyRevenueUsers = async (query: Record<string, any>) => {
     ]);
 
   //  3. Merge data into one object
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const merged: Record<string, any> = {};
   const makeKey = (y: number, m: number) =>
     `${y}-${String(m).padStart(2, "0")}`;
@@ -255,7 +257,7 @@ const getMonthlyRevenueUsers = async (query: Record<string, any>) => {
     customers: number;
     providers: number;
   }[] = [];
-  let current = new Date(startYear, startMonth - 1, 1);
+  const current = new Date(startYear, startMonth - 1, 1);
 
   while (current <= endDate) {
     const y = current.getFullYear();
