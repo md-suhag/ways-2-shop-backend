@@ -20,4 +20,21 @@ const createPackageZodSchema = z.object({
   }),
 });
 
-export const PackageValidation = { createPackageZodSchema };
+const updatePackageZodSchema = z.object({
+  body: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    price: z.number().optional(),
+    durationInDays: z.number().optional(),
+    billingCycle: z.nativeEnum(BillingCycle).optional(),
+    googleProductId: z.string().optional(),
+    appleProductId: z.string().optional(),
+    features: z.array(z.string()).optional(),
+    isActive: z.boolean().optional(),
+  }),
+});
+
+export const PackageValidation = {
+  createPackageZodSchema,
+  updatePackageZodSchema,
+};
