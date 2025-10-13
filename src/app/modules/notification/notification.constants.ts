@@ -1,5 +1,5 @@
 export enum NOTIFICATION_TYPE {
-  MISSED_CALL = "Missed Call",
-  PAYMENT = "Payment",
-  SUBSCRIPTION = "Subscription",
+  MISSED_CALL = "missed-call",
+  PAYMENT = "payment",
+  SUBSCRIPTION = "subscription",
 }
