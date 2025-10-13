@@ -13,6 +13,7 @@ export interface IService {
   coordinates: ICoordinates;
   categories: Types.ObjectId[];
   provider: Types.ObjectId;
+  isActive: boolean;
 }
 
 export type ServiceModel = Model<IService>;

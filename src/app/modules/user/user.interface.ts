@@ -39,6 +39,7 @@ export interface IUser {
   isDeleted?: boolean;
   isOnline?: boolean;
   appId?: string;
+  subscription?: Types.ObjectId;
   authentication?: IAuthenticationProps;
 }
 

@@ -32,6 +32,10 @@ const serviceSchema = new Schema<IService, ServiceModel>(
       ref: "User",
       required: true,
     },
+    isActive: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

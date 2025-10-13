@@ -85,6 +85,10 @@ const userSchema = new Schema<IUser, UserModal>(
     appId: {
       type: String,
     },
+    subscription: {
+      type: Schema.Types.ObjectId,
+      ref: "Subscription",
+    },
     authentication: {
       type: {
         isResetPassword: {
