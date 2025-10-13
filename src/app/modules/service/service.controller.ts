@@ -47,9 +47,51 @@ const createService = catchAsync(async (req: Request, res: Response) => {
 //   });
 // });
 
+// const getAllService = catchAsync(async (req: Request, res: Response) => {
+//   const {
+//     latitude,
+//     longitude,
+//     distance,
+//     category,
+//     page,
+//     limit,
+//     searchTerm,
+//     sort,
+//   } = req.query;
+
+//   const filterPayload = {
+//     coordinates:
+//       latitude && longitude ? [Number(longitude), Number(latitude)] : undefined,
+//     distance: distance ? Number(distance) : undefined,
+//     category,
+//   };
+
+//   const queryParams = { page, limit, searchTerm, sort };
+
+//   const result = await ServiceService.getAllServiceFromDB(
+//     filterPayload,
+//     queryParams
+//   );
+
+//   sendResponse(res, {
+//     success: true,
+//     statusCode: StatusCodes.OK,
+//     message: "All service retrieved successfully",
+//     data: result.services,
+//     pagination: result.pagination,
+//   });
+// });
 const getAllService = catchAsync(async (req: Request, res: Response) => {
-  const { latitude, longitude, distance, category, page, limit, searchTerm } =
-    req.query;
+  const {
+    latitude,
+    longitude,
+    distance,
+    category,
+    page,
+    limit,
+    searchTerm,
+    sort,
+  } = req.query;
 
   const filterPayload = {
     coordinates:
@@ -58,7 +100,7 @@ const getAllService = catchAsync(async (req: Request, res: Response) => {
     category,
   };
 
-  const queryParams = { page, limit, searchTerm };
+  const queryParams = { page, limit, searchTerm, sort };
 
   const result = await ServiceService.getAllServiceFromDB(
     filterPayload,

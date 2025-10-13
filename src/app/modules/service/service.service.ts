@@ -7,6 +7,7 @@ import { JwtPayload } from "jsonwebtoken";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { User } from "../user/user.model";
 import { Review } from "../review/review.model";
+import mongoose from "mongoose";
 
 // import { FilterQuery } from "mongoose";
 
@@ -99,51 +100,164 @@ const createServiceToDB = async (
 //   return { services, pagination };
 // };
 
-const getAllServiceFromDB = async (payload: any, query: any) => {
-  const filter: any = {};
+///////
+// const getAllServiceFromDB = async (payload: any, query: any) => {
+//   const filter: any = {};
 
-  // category filter
+//   // category filter
+//   if (payload?.category) {
+//     filter.categories = { $in: [payload.category] };
+//   }
+
+//   // geo location filter using $geoWithin
+//   if (payload?.coordinates && payload?.distance) {
+//     const [lng, lat] = payload.coordinates;
+
+//     filter.coordinates = {
+//       $geoWithin: {
+//         $centerSphere: [
+//           [lng, lat],
+//           payload.distance / 6378137, // convert meters to radians
+//         ],
+//       },
+//     };
+//   }
+
+//   // build query with querybuilder
+//   const serviceQuery = new QueryBuilder(Service.find(filter), query)
+//     .paginate()
+//     .filter()
+//     .sort()
+
+//   // Exclude description & image, populate provider + category
+//   serviceQuery.modelQuery = serviceQuery.modelQuery
+//     .select("-description -image -coordinates -locationName -categories")
+//     .populate({
+//       path: "provider",
+//       select: "name profile totalReview totalJobs avgRating businessCategory",
+//       populate: {
+//         path: "businessCategory",
+//         select: "name",
+//       },
+//     });
+//   const [services, pagination] = await Promise.all([
+//     serviceQuery.modelQuery.lean().exec(),
+//     serviceQuery.getPaginationInfo(),
+//   ]);
+
+//   return { services, pagination };
+// };
+const getAllServiceFromDB = async (payload: any, query: any) => {
+  const { page = 1, limit = 10, searchTerm, sort = "-createdAt" } = query;
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const matchStage: Record<string, any> = {};
+
+  //  Category filter
   if (payload?.category) {
-    filter.categories = { $in: [payload.category] };
+    try {
+      matchStage.categories = {
+        $in: [new mongoose.Types.ObjectId(payload.category)],
+      };
+    } catch {
+      throw new Error("Invalid category ID format");
+    }
   }
 
-  // geo location filter using $geoWithin
+  //  Geo filter
   if (payload?.coordinates && payload?.distance) {
     const [lng, lat] = payload.coordinates;
-
-    filter.coordinates = {
+    matchStage.coordinates = {
       $geoWithin: {
-        $centerSphere: [
-          [lng, lat],
-          payload.distance / 6378137, // convert meters to radians
-        ],
+        $centerSphere: [[lng, lat], payload.distance / 6378137],
       },
     };
   }
 
-  // build query with querybuilder
-  const serviceQuery = new QueryBuilder(Service.find(filter), query)
-    .paginate()
-    .filter()
-    .sort();
-
-  // Exclude description & image, populate provider + category
-  serviceQuery.modelQuery = serviceQuery.modelQuery
-    .select("-description -image -coordinates -locationName -categories")
-    .populate({
-      path: "provider",
-      select: "name profile totalReview totalJobs avgRating businessCategory",
-      populate: {
-        path: "businessCategory",
-        select: "name",
+  //  Base pipeline (no pagination yet)
+  const basePipeline: any[] = [
+    { $match: matchStage },
+    {
+      $lookup: {
+        from: "users",
+        localField: "provider",
+        foreignField: "_id",
+        as: "provider",
       },
-    });
-  const [services, pagination] = await Promise.all([
-    serviceQuery.modelQuery.lean().exec(),
-    serviceQuery.getPaginationInfo(),
+    },
+    { $unwind: "$provider" },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "categories",
+        foreignField: "_id",
+        as: "categories",
+      },
+    },
+    ...(searchTerm
+      ? [
+          {
+            $match: {
+              $or: [
+                { description: { $regex: searchTerm, $options: "i" } },
+                { "categories.name": { $regex: searchTerm, $options: "i" } },
+              ],
+            },
+          },
+        ]
+      : []),
+  ];
+
+  //  Sort stage
+  const sortStage: Record<string, 1 | -1> = {};
+  const sortField = sort.replace(/^-/, "");
+  const sortOrder = sort.startsWith("-") ? -1 : 1;
+  if (["avgRating", "totalJobs", "totalReview"].includes(sortField))
+    sortStage[`provider.${sortField}`] = sortOrder;
+  else sortStage[sortField] = sortOrder;
+
+  // Paginated pipeline
+  const paginatedPipeline = [
+    ...basePipeline,
+    { $sort: sortStage },
+    { $skip: skip },
+    { $limit: Number(limit) },
+    {
+      $project: {
+        ratePerHour: 1,
+        provider: {
+          name: 1,
+          profile: 1,
+          avgRating: 1,
+          totalJobs: 1,
+          totalReview: 1,
+          businessCategory: 1,
+        },
+        categories: { name: 1 },
+        createdAt: 1,
+      },
+    },
+  ];
+
+  //  Count pipeline (same filters but without skip/limit)
+  const countPipeline = [...basePipeline, { $count: "total" }];
+
+  const [results, countResult] = await Promise.all([
+    Service.aggregate(paginatedPipeline),
+    Service.aggregate(countPipeline),
   ]);
 
-  return { services, pagination };
+  const totalCount = countResult[0]?.total || 0;
+
+  return {
+    services: results,
+    pagination: {
+      total: totalCount,
+      page: Number(page),
+      limit: Number(limit),
+      totalPage: Math.ceil(totalCount / Number(limit)) || 1,
+    },
+  };
 };
 
 const getSingleServiceFromDB = async (id: string) => {
