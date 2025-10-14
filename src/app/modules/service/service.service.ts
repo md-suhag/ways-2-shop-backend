@@ -151,7 +151,9 @@ const getAllServiceFromDB = async (payload: any, query: any) => {
   const { page = 1, limit = 10, searchTerm, sort = "-createdAt" } = query;
 
   const skip = (Number(page) - 1) * Number(limit);
-  const matchStage: Record<string, any> = {};
+  const matchStage: Record<string, any> = {
+    isActive: true,
+  };
 
   //  Category filter
   if (payload?.category) {
