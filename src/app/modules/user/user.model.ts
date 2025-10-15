@@ -58,12 +58,15 @@ const userSchema = new Schema<IUser, UserModal>(
     businessCategory: [{ type: Schema.Types.ObjectId, ref: "Category" }],
     totalJobs: {
       type: Number,
+      default: 0,
     },
     avgRating: {
       type: Number,
+      default: 0,
     },
     totalReview: {
       type: Number,
+      default: 0,
     },
     isActive: {
       type: String,
