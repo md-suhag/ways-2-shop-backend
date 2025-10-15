@@ -35,7 +35,20 @@ const toggleBookmark = async (
 };
 
 const getBookmark = async (user: JwtPayload): Promise<IBookmark[]> => {
-  const result = await Bookmark.find({ user: user?.id });
+  const result = await Bookmark.find({ user: user?.id })
+    .select("-createdAt -updatedAt -__v")
+    .populate({
+      path: "service",
+      select: "provider ratePerHour ",
+      populate: {
+        path: "provider",
+        select: "name totalJobs profile totalReview avgRating businessCategory",
+        populate: {
+          path: "businessCategory",
+          select: "name",
+        },
+      },
+    });
 
   return result;
 };
