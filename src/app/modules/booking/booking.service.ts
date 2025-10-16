@@ -11,7 +11,7 @@ import { generateOrderId } from "../../../util/generateOrderId";
 
 const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
   const serviceData = await Service.findOne({
-    service: payload.service,
+    _id: payload.service,
     isActive: true,
   });
   if (!serviceData) {
@@ -40,13 +40,13 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
     });
     payload.stripePaymentIntentId = paymentIntent.id;
 
-    const booking = await Booking.create(payload);
-    return { booking, clientSecret: paymentIntent.client_secret };
+    await Booking.create(payload);
+    return { clientSecret: paymentIntent.client_secret };
   } else {
     // COD booking
-    const booking = await Booking.create(payload);
+    await Booking.create(payload);
 
-    return { booking };
+    return null;
   }
 };
 

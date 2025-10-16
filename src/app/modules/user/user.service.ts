@@ -8,6 +8,7 @@ import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
 import unlinkFile from "../../../shared/unlinkFile";
 import { USER_ROLES } from "../../../enums/user";
+import stripe from "../../../config/stripe";
 
 const createAdminToDB = async (payload: Partial<IUser>): Promise<IUser> => {
   // check admin is exist or not;
@@ -109,9 +110,34 @@ const updateProfileToDB = async (
   return updateDoc;
 };
 
+const createConnectedAccount = async (user: JwtPayload) => {
+  const provider = await User.findById(user.id);
+  if (!provider) {
+    throw new ApiError(404, "Provider not found");
+  }
+
+  const account = await stripe.accounts.create({
+    type: "express",
+    email: provider?.email,
+  });
+
+  provider.stripeAccountId = account.id;
+
+  await provider.save();
+
+  const accountLink = await stripe.accountLinks.create({
+    account: account.id,
+    refresh_url: "https://yourapp.com/refresh",
+    return_url: "https://yourapp.com/success",
+    type: "account_onboarding",
+  });
+
+  return { url: accountLink.url };
+};
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
   updateProfileToDB,
   createAdminToDB,
+  createConnectedAccount,
 };

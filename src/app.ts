@@ -9,7 +9,14 @@ import session from "express-session";
 import passport from "passport";
 import config from "./config";
 import router from "./routes";
+import { handleStripeWebhook } from "./webhook/handleStripeWebhook";
 const app = express();
+
+app.use(
+  "/api/v1/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  handleStripeWebhook
+);
 
 // morgan
 app.use(Morgan.successHandler);

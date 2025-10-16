@@ -32,8 +32,8 @@ export interface IBooking {
   status: IBookingStatus;
   paymentStatus: IPaymentStatus;
   paymentType: IPaymentType;
-  stripePaymentIntentId: string;
-  stripeTransferId: string | null;
+  stripePaymentIntentId?: string;
+  stripeTransferId?: string;
   orderId: string;
   price: number;
   location: ILocation;

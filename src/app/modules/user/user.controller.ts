@@ -67,9 +67,25 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createConnectedAccount = catchAsync(
+  async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload;
+
+    const accountLink = await UserService.createConnectedAccount(user);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Connected Account link created",
+      data: accountLink,
+    });
+  }
+);
+
 export const UserController = {
   createUser,
   createAdmin,
   getUserProfile,
   updateProfile,
+  createConnectedAccount,
 };

@@ -6,7 +6,6 @@ import { ServiceRoutes } from "../app/modules/service/service.route";
 import { BookmarkRoutes } from "../app/modules/bookmark/bookmark.routes";
 import { ReviewRoutes } from "../app/modules/review/review.routes";
 import { BookingRoutes } from "../app/modules/booking/booking.route";
-import { PaymentRoutes } from "../app/modules/payment/payment.route";
 import { AdminRoutes } from "../app/modules/admin/admin.route";
 import { ChatRoutes } from "../app/modules/chat/chat.routes";
 import { MessageRoutes } from "../app/modules/message/message.routes";
@@ -27,7 +26,7 @@ const apiRoutes = [
   { path: "/bookmarks", route: BookmarkRoutes },
   { path: "/reviews", route: ReviewRoutes },
   { path: "/bookings", route: BookingRoutes },
-  { path: "/payments", route: PaymentRoutes },
+
   { path: "/admin", route: AdminRoutes },
   { path: "/chats", route: ChatRoutes },
   { path: "/messages", route: MessageRoutes },

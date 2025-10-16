@@ -45,8 +45,8 @@ const bookingSchema = new Schema<IBooking, BookingModel>(
       enum: Object.values(IPaymentType),
       required: true,
     },
-    stripePaymentIntentId: { type: String, required: true },
-    stripeTransferId: { type: String, default: null },
+    stripePaymentIntentId: { type: String },
+    stripeTransferId: { type: String },
 
     orderId: { type: String, required: true, unique: true },
     price: { type: Number, required: true },
