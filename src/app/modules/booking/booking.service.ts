@@ -52,6 +52,7 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
 
 const getSingleBooking = async (id: string) => {
   const booking = await Booking.findById(id)
+    .select("-stripePaymentIntentId")
     .populate({
       path: "provider",
       select: "name businessCategory profile location.locationName",
