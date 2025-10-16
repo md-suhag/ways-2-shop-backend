@@ -3,25 +3,51 @@ import ApiError from "../../../errors/ApiErrors";
 import { Service } from "../service/service.model";
 import { calculatePrice } from "../../../util/calculatePrice";
 import { Booking } from "./booking.model";
-import { IBooking, IBookingStatus } from "./booking.interface";
+import { IBooking, IBookingStatus, IPaymentStatus } from "./booking.interface";
 import { JwtPayload } from "jsonwebtoken";
 import QueryBuilder from "../../builder/QueryBuilder";
+import stripe from "../../../config/stripe";
+import { generateOrderId } from "../../../util/generateOrderId";
 
-const createBooking = async (payload: IBooking, user: JwtPayload) => {
-  const serviceData = await Service.findById(payload.service);
+const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
+  const serviceData = await Service.findOne({
+    service: payload.service,
+    isActive: true,
+  });
   if (!serviceData) {
     throw new ApiError(StatusCodes.NOT_FOUND, "service not found");
   }
 
-  payload.price = calculatePrice(
+  const bookingPrice = calculatePrice(
     serviceData.ratePerHour,
-    payload.startTime,
-    payload.endTime
+    payload.startTime as unknown as string,
+    payload.endTime as unknown as string
   );
   payload.customer = user.id;
-  const booking = await Booking.create(payload);
+  payload.price = bookingPrice;
+  payload.orderId = generateOrderId();
+  payload.paymentStatus = IPaymentStatus.PENDING;
 
-  return booking;
+  if (payload.paymentType === "ONLINE") {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: bookingPrice * 100,
+      currency: "usd",
+      metadata: {
+        customerId: user.id.toString(),
+        providerId: payload.provider ? payload.provider.toString() : null,
+        orderId: payload.orderId,
+      },
+    });
+    payload.stripePaymentIntentId = paymentIntent.id;
+
+    const booking = await Booking.create(payload);
+    return { booking, clientSecret: paymentIntent.client_secret };
+  } else {
+    // COD booking
+    const booking = await Booking.create(payload);
+
+    return { booking };
+  }
 };
 
 const getSingleBooking = async (id: string) => {

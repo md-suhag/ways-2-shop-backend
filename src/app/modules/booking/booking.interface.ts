@@ -3,11 +3,14 @@ import { Model, Types } from "mongoose";
 export enum IBookingStatus {
   PENDING = "PENDING",
   COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
 }
 export enum IPaymentStatus {
   PENDING = "PENDING",
   FAILED = "FAILED",
+  TRANSFERRED = "TRANSFERRED",
   PAID = "PAID",
+  REFUNDED = "REFUNDED",
 }
 export enum IPaymentType {
   ONLINE = "ONLINE",
@@ -29,7 +32,8 @@ export interface IBooking {
   status: IBookingStatus;
   paymentStatus: IPaymentStatus;
   paymentType: IPaymentType;
-  txId?: string | null;
+  stripePaymentIntentId: string;
+  stripeTransferId: string | null;
   orderId: string;
   price: number;
   location: ILocation;

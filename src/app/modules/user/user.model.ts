@@ -88,10 +88,13 @@ const userSchema = new Schema<IUser, UserModal>(
     appId: {
       type: String,
     },
+
     subscription: {
       type: Schema.Types.ObjectId,
       ref: "Subscription",
     },
+    stripeAccountId: { type: String, default: null },
+    isStripeAccountReady: { type: Boolean, default: false },
     authentication: {
       type: {
         isResetPassword: {

@@ -1,7 +1,7 @@
 export function calculatePrice(
   ratePerHour: number,
-  startTime: Date,
-  endTime: Date
+  startTime: string,
+  endTime: string
 ) {
   const start = new Date(startTime);
   const end = new Date(endTime);

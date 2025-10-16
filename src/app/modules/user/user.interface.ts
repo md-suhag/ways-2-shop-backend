@@ -40,6 +40,8 @@ export interface IUser {
   isOnline?: boolean;
   appId?: string;
   subscription?: Types.ObjectId;
+  stripeAccountId?: string | null;
+  isStripeAccountReady?: boolean;
   authentication?: IAuthenticationProps;
 }
 
