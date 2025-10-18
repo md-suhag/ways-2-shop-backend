@@ -264,8 +264,16 @@ const getAllServiceFromDB = async (payload: any, query: any) => {
 
 const getSingleServiceFromDB = async (id: string) => {
   return await Service.findById(id)
-    .select("description image ratePerHour provider")
-    .populate("provider", "name totalReview avgRating totalJobs");
+    .select("description image ratePerHour")
+    .populate({
+      path: "provider",
+      select: "name avgRating totalJobs",
+      populate: {
+        path: "businessCategory",
+        select: "name -_id",
+      },
+    })
+    .lean();
 };
 
 const getServiceReviewsFromDB = async (id: string) => {
