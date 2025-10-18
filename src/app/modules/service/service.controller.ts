@@ -117,7 +117,11 @@ const getAllService = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getSingleService = catchAsync(async (req: Request, res: Response) => {
-  const result = await ServiceService.getSingleServiceFromDB(req.params.id);
+  const user = req.user as JwtPayload;
+  const result = await ServiceService.getSingleServiceFromDB(
+    req.params.id,
+    user
+  );
 
   sendResponse(res, {
     success: true,

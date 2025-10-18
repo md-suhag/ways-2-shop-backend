@@ -8,6 +8,7 @@ import QueryBuilder from "../../builder/QueryBuilder";
 import { User } from "../user/user.model";
 import { Review } from "../review/review.model";
 import mongoose from "mongoose";
+import { Bookmark } from "../bookmark/bookmark.model";
 
 // import { FilterQuery } from "mongoose";
 
@@ -262,8 +263,8 @@ const getAllServiceFromDB = async (payload: any, query: any) => {
   };
 };
 
-const getSingleServiceFromDB = async (id: string) => {
-  return await Service.findById(id)
+const getSingleServiceFromDB = async (id: string, user: JwtPayload) => {
+  const service = await Service.findById(id)
     .select("description image ratePerHour")
     .populate({
       path: "provider",
@@ -274,6 +275,16 @@ const getSingleServiceFromDB = async (id: string) => {
       },
     })
     .lean();
+
+  const isFavorite = await Bookmark.findOne({
+    service: id,
+    user: user.id,
+  });
+
+  return {
+    ...service,
+    isFavorite: isFavorite ? true : false,
+  };
 };
 
 const getServiceReviewsFromDB = async (id: string) => {
