@@ -10,6 +10,8 @@ import { User } from "../user/user.model";
 import { IsActive } from "../user/user.interface";
 import { Category } from "../category/category.model";
 import { Package } from "../package/package.model";
+import { RecentActivity } from "../recentActivity/recent-activity.model";
+import { RecentActivityType } from "../recentActivity/recent-activity.interface";
 
 const contactUs = async (payload: IContactUs) => {
   const contactUsTemplate = emailTemplate.contactUs(payload);
@@ -72,6 +74,11 @@ const updateUserStatus = async (id: string, isActive: IsActive) => {
     { isActive },
     { new: true, runValidators: true }
   ).lean();
+
+  await RecentActivity.create({
+    type: RecentActivityType.USER_STATUS,
+    message: `${result?.email} - user status changed to '${isActive}' by admin`,
+  });
   return result;
 };
 

@@ -2,6 +2,8 @@ import { StatusCodes } from "http-status-codes";
 import ApiError from "../../../errors/ApiErrors";
 import { IPackage } from "./package.interface";
 import { Package } from "./package.model";
+import { RecentActivity } from "../recentActivity/recent-activity.model";
+import { RecentActivityType } from "../recentActivity/recent-activity.interface";
 
 const createPackage = async (payload: Partial<IPackage>) => {
   const existingPackage = await Package.findOne({ title: payload.title });
@@ -12,6 +14,11 @@ const createPackage = async (payload: Partial<IPackage>) => {
     );
   }
   await Package.create(payload);
+
+  await RecentActivity.create({
+    type: RecentActivityType.PACKAGE_CREATED,
+    message: "New Package Created by admin",
+  });
 };
 
 const getAllActivePackagesFromDB = async () => {
@@ -27,6 +34,10 @@ const updatePackageToDB = async (id: string, payload: Partial<IPackage>) => {
   const updatedPackage = await Package.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
+  });
+  await RecentActivity.create({
+    type: RecentActivityType.PACKAGE_UPDATED,
+    message: `'${updatedPackage?.title}' package updated.`,
   });
   return updatedPackage;
 };
