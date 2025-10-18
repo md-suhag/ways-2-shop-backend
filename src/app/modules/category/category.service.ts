@@ -3,6 +3,8 @@ import ApiError from "../../../errors/ApiErrors";
 import { CategoryStatus, ICategory } from "./category.interface";
 import { Category } from "./category.model";
 import unlinkFile from "../../../shared/unlinkFile";
+import { RecentActivity } from "../recentActivity/recent-activity.model";
+import { RecentActivityType } from "../recentActivity/recent-activity.interface";
 
 const createCategoryToDB = async (payload: ICategory) => {
   const { name, image } = payload;
@@ -27,6 +29,11 @@ const createCategoryToDB = async (payload: ICategory) => {
     unlinkFile(image);
     throw new ApiError(StatusCodes.BAD_REQUEST, "Failed to create Category");
   }
+
+  await RecentActivity.create({
+    type: RecentActivityType.CATEGORY_CREATED,
+    message: `New Service Category "${name}" created`,
+  });
 
   return createCategory;
 };

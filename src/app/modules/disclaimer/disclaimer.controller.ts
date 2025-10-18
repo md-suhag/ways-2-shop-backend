@@ -3,12 +3,17 @@ import { DisclaimerServices } from "./disclaimer.service";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { StatusCodes } from "http-status-codes";
+import { JwtPayload } from "jsonwebtoken";
 
 // create or update disclaimer
 const createUpdateDisclaimer = catchAsync(
   async (req: Request, res: Response) => {
     const payload = req.body;
-    const result = await DisclaimerServices.createUpdateDisclaimer(payload);
+    const user = req.user;
+    const result = await DisclaimerServices.createUpdateDisclaimer(
+      payload,
+      user as JwtPayload
+    );
 
     sendResponse(res, {
       statusCode: StatusCodes.OK,
