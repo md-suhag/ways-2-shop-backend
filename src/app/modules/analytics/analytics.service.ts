@@ -3,121 +3,60 @@ import { USER_ROLES } from "../../../enums/user";
 import ApiError from "../../../errors/ApiErrors";
 import { Subscription } from "../subscription/subscription.model";
 import { User } from "../user/user.model";
+import { Booking } from "../booking/booking.model";
+import { IBookingStatus } from "../booking/booking.interface";
 
-const getAnalyticsOverview = async () => {
+const getAnalyticsOverview = async (range: string) => {
   const now = new Date();
-
-  const todayStart = new Date(now);
+  const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const last7Days = new Date(now);
-  last7Days.setDate(now.getDate() - 7);
-
-  const last30Days = new Date(now);
-  last30Days.setDate(now.getDate() - 30);
-
-  const getRevenue = async (startDate?: Date) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const matchStage: any = {};
-    if (startDate) matchStage.createdAt = { $gte: startDate };
-
-    const result = await Subscription.aggregate([
-      { $match: matchStage },
-      { $group: { _id: null, totalRevenue: { $sum: "$priceAtPurchase" } } },
-    ]);
-
-    return result[0]?.totalRevenue || 0;
+  const ranges: Record<string, Date | undefined> = {
+    today: todayStart,
+    "7d": new Date(now.setDate(now.getDate() - 7)),
+    "30d": new Date(now.setDate(now.getDate() - 30)),
+    all: undefined,
   };
 
-  const totalCustomersPromise = User.countDocuments({
-    role: USER_ROLES.CUSTOMER,
-  });
-  const todayCustomersPromise = User.countDocuments({
-    role: USER_ROLES.CUSTOMER,
-    createdAt: { $gte: todayStart },
-  });
-  const last7DaysCustomersPromise = User.countDocuments({
-    role: USER_ROLES.CUSTOMER,
-    createdAt: { $gte: last7Days },
-  });
-  const last30DaysCustomersPromise = User.countDocuments({
-    role: USER_ROLES.CUSTOMER,
-    createdAt: { $gte: last30Days },
-  });
+  const startDate = range === "all" ? undefined : ranges[range] ?? ranges["7d"];
 
-  const totalProvidersPromise = User.countDocuments({
-    role: USER_ROLES.PROVIDER,
-  });
-  const todayProvidersPromise = User.countDocuments({
-    role: USER_ROLES.PROVIDER,
-    createdAt: { $gte: todayStart },
-  });
-  const last7DaysProvidersPromise = User.countDocuments({
-    role: USER_ROLES.PROVIDER,
-    createdAt: { $gte: last7Days },
-  });
-  const last30DaysProvidersPromise = User.countDocuments({
-    role: USER_ROLES.PROVIDER,
-    createdAt: { $gte: last30Days },
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const matchStage: any = {};
+  if (startDate) matchStage.createdAt = { $gte: startDate };
 
-  //  Revenue calculations
-  const totalRevenuePromise = getRevenue();
-  const todayRevenuePromise = getRevenue(todayStart);
-  const last7DaysRevenuePromise = getRevenue(last7Days);
-  const last30DaysRevenuePromise = getRevenue(last30Days);
+  const [revenueResult, customerCount, providerCount, completedJobs] =
+    await Promise.all([
+      Subscription.aggregate([
+        {
+          $match: startDate
+            ? { ...matchStage, status: { $in: ["active", "expired"] } }
+            : { status: { $in: ["active", "expired"] } },
+        },
+        { $group: { _id: null, totalRevenue: { $sum: "$priceAtPurchase" } } },
+      ]),
 
-  const [
-    totalCustomers,
-    todayCustomers,
-    last7DaysCustomers,
-    last30DaysCustomers,
+      User.countDocuments({
+        role: USER_ROLES.CUSTOMER,
+        ...(startDate ? { createdAt: { $gte: startDate } } : {}),
+      }),
 
-    totalProviders,
-    todayProviders,
-    last7DaysProviders,
-    last30DaysProviders,
+      User.countDocuments({
+        role: USER_ROLES.PROVIDER,
+        ...(startDate ? { createdAt: { $gte: startDate } } : {}),
+      }),
 
-    totalRevenue,
-    todayRevenue,
-    last7DaysRevenue,
-    last30DaysRevenue,
-  ] = await Promise.all([
-    totalCustomersPromise,
-    todayCustomersPromise,
-    last7DaysCustomersPromise,
-    last30DaysCustomersPromise,
-
-    totalProvidersPromise,
-    todayProvidersPromise,
-    last7DaysProvidersPromise,
-    last30DaysProvidersPromise,
-
-    totalRevenuePromise,
-    todayRevenuePromise,
-    last7DaysRevenuePromise,
-    last30DaysRevenuePromise,
-  ]);
+      Booking.countDocuments({
+        status: IBookingStatus.COMPLETED,
+        ...(startDate ? { createdAt: { $gte: startDate } } : {}),
+      }),
+    ]);
 
   return {
-    customers: {
-      total: totalCustomers,
-      today: todayCustomers,
-      last7Days: last7DaysCustomers,
-      last30Days: last30DaysCustomers,
-    },
-    providers: {
-      total: totalProviders,
-      today: todayProviders,
-      last7Days: last7DaysProviders,
-      last30Days: last30DaysProviders,
-    },
-    subscriptionRevenue: {
-      total: totalRevenue,
-      today: todayRevenue,
-      last7Days: last7DaysRevenue,
-      last30Days: last30DaysRevenue,
-    },
+    range,
+    customers: customerCount,
+    providers: providerCount,
+    completedJobs,
+    subscriptionRevenue: revenueResult[0]?.totalRevenue || 0,
   };
 };
 

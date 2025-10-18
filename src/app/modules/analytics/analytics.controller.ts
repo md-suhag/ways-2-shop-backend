@@ -5,7 +5,9 @@ import { StatusCodes } from "http-status-codes";
 import sendResponse from "../../../shared/sendResponse";
 
 const getAnalyticsOverview = catchAsync(async (req: Request, res: Response) => {
-  const result = await AnalyticsService.getAnalyticsOverview();
+  const range = (req.query.range as string) || "7d";
+
+  const result = await AnalyticsService.getAnalyticsOverview(range);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
