@@ -17,6 +17,16 @@ const getAnalyticsOverview = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getTotalRevenue = catchAsync(async (req: Request, res: Response) => {
+  const result = await AnalyticsService.getTotalRevenue(req.query);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Total Revenue fetched successfully",
+    data: result,
+  });
+});
+
 const getMonthlyRevenueUsers = catchAsync(
   async (req: Request, res: Response) => {
     const result = await AnalyticsService.getMonthlyRevenueUsers(req.query);
@@ -31,5 +41,6 @@ const getMonthlyRevenueUsers = catchAsync(
 
 export const AnalyticsController = {
   getAnalyticsOverview,
+  getTotalRevenue,
   getMonthlyRevenueUsers,
 };

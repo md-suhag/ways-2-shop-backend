@@ -60,6 +60,59 @@ const getAnalyticsOverview = async (range: string) => {
   };
 };
 
+const getTotalRevenue = async (query: Record<string, unknown>) => {
+  // 1. Determine current year (or allow optional year param)
+  const currentYear = query.year
+    ? Number(query.year)
+    : new Date().getFullYear();
+
+  if (isNaN(currentYear) || currentYear < 2000 || currentYear > 2100) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid year parameter");
+  }
+
+  // 2. Define start and end dates for that year
+  const startDate = new Date(currentYear, 0, 1); // Jan 1
+  const endDate = new Date(currentYear, 11, 31, 23, 59, 59, 999); // Dec 31
+
+  // 3. Aggregate revenue by month
+  const revenueByMonth = await Subscription.aggregate([
+    {
+      $match: {
+        createdAt: { $gte: startDate, $lte: endDate },
+        status: { $in: ["active", "expired"] },
+      },
+    },
+    {
+      $group: {
+        _id: { month: { $month: "$createdAt" } },
+        totalRevenue: { $sum: "$priceAtPurchase" },
+      },
+    },
+    { $sort: { "_id.month": 1 } },
+  ]);
+
+  // 4. Fill missing months with zeros (Jan–Dec)
+  const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
+  const merged = allMonths.map((month) => {
+    const found = revenueByMonth.find((r) => r._id.month === month);
+    return {
+      month,
+      revenue: found?.totalRevenue || 0,
+      label: new Date(currentYear, month - 1).toLocaleString("en-US", {
+        month: "short",
+        year: "numeric",
+      }),
+    };
+  });
+
+  // 5. Return formatted data
+  return {
+    year: currentYear,
+    monthlyRevenue: merged,
+    totalRevenue: merged.reduce((acc, m) => acc + m.revenue, 0),
+  };
+};
+
 const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
   const startYear = Number(query.startYear);
   const startMonth = Number(query.startMonth);
@@ -228,4 +281,5 @@ const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
 export const AnalyticsService = {
   getAnalyticsOverview,
   getMonthlyRevenueUsers,
+  getTotalRevenue,
 };

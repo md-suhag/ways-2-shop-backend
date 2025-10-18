@@ -12,6 +12,11 @@ router.get(
   validateRequest(AnalyticsValidations.analyticsOverviewZodSchema),
   AnalyticsController.getAnalyticsOverview
 );
+router.get(
+  "/total-revenue",
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  AnalyticsController.getTotalRevenue
+);
 
 router.get(
   "/monthly-revenue-users",
