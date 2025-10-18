@@ -17,7 +17,6 @@ const categorySchema = new Schema<ICategory, CategoryModel>(
       enum: Object.values(CategoryStatus),
       default: CategoryStatus.ACTIVE,
     },
-    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

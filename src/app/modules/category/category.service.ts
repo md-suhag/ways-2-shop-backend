@@ -5,6 +5,8 @@ import { Category } from "./category.model";
 import unlinkFile from "../../../shared/unlinkFile";
 import { RecentActivity } from "../recentActivity/recent-activity.model";
 import { RecentActivityType } from "../recentActivity/recent-activity.interface";
+import { User } from "../user/user.model";
+import { USER_ROLES } from "../../../enums/user";
 
 const createCategoryToDB = async (payload: ICategory) => {
   const { name, image } = payload;
@@ -41,7 +43,6 @@ const createCategoryToDB = async (payload: ICategory) => {
 const getAllCategoriesFromDB = async (): Promise<ICategory[]> => {
   const result = await Category.find({
     status: CategoryStatus.ACTIVE,
-    isDeleted: false,
   });
   return result;
 };
@@ -65,14 +66,19 @@ const updateCategoryToDB = async (id: string, payload: Partial<ICategory>) => {
 };
 
 const deleteCategoryToDB = async (id: string): Promise<ICategory | null> => {
-  const deleteCategory = await Category.findByIdAndUpdate(
-    id,
-    {
-      isDeleted: true,
-      status: CategoryStatus.INACTIVE,
-    },
-    { new: true }
-  );
+  const isCategoryUsed = await User.exists({
+    role: USER_ROLES.PROVIDER,
+    businessCategory: id,
+  });
+
+  if (isCategoryUsed) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Category is used by providers and cannot be deleted"
+    );
+  }
+
+  const deleteCategory = await Category.findByIdAndDelete(id);
   if (!deleteCategory) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Category doesn't exist");
   }
