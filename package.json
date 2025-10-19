@@ -8,11 +8,7 @@
     "start": "node dist/server.js",
     "build": "tsc",
     "cm": "ts-node ./src/cm.ts",
-    "lint:check": "eslint --ignore-path .eslintignore --ext .js,.ts",
-    "lint:fix": "lint . --fix",
-    "prettier:check": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
-    "prettier:fix": "prettier --write .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint ./src"
   },
   "author": "md-suhag",
   "license": "ISC",

@@ -10,6 +10,7 @@ import QueryBuilder from "../../builder/QueryBuilder";
 import stripe from "../../../config/stripe";
 import { generateOrderId } from "../../../util/generateOrderId";
 import { checkTimeSlotAvailability } from "../../../util/checkTimeSlotAvailability";
+import mongoose from "mongoose";
 
 const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
   const serviceData = await Service.findOne({
@@ -20,7 +21,7 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
     throw new ApiError(StatusCodes.NOT_FOUND, "service not found");
   }
 
-  // 🔍 Check if slot available
+  //  Check if slot available
   const isAvailable = await checkTimeSlotAvailability(
     payload.provider!,
     payload.bookingDate!,
@@ -45,25 +46,46 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
   payload.orderId = generateOrderId();
   payload.paymentStatus = IPaymentStatus.PENDING;
 
-  if (payload.paymentType === "ONLINE") {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: bookingPrice * 100,
-      currency: "usd",
-      metadata: {
-        customerId: user.id.toString(),
-        providerId: payload.provider ? payload.provider.toString() : null,
-        orderId: payload.orderId,
-      },
-    });
-    payload.stripePaymentIntentId = paymentIntent.id;
+  //  Start transaction session
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    await Booking.create(payload);
-    return { clientSecret: paymentIntent.client_secret };
-  } else {
-    // COD booking
-    await Booking.create(payload);
+  try {
+    if (payload.paymentType === "ONLINE") {
+      // 1️ Create Stripe PaymentIntent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: bookingPrice * 100,
+        currency: "usd",
+        metadata: {
+          customerId: user.id.toString(),
+          providerId: payload.provider?.toString() || "",
+          orderId: payload.orderId,
+        },
+      });
 
-    return null;
+      payload.stripePaymentIntentId = paymentIntent.id;
+
+      // 2️ Create booking within transaction
+      await Booking.create([payload], { session });
+
+      // 3️ Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      return { clientSecret: paymentIntent.client_secret };
+    } else {
+      // COD booking
+      await Booking.create([payload], { session });
+      await session.commitTransaction();
+      session.endSession();
+
+      return null;
+    }
+  } catch (error) {
+    //  Rollback if anything fails
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
 };
 
