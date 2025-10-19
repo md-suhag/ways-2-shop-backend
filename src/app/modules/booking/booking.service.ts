@@ -4,7 +4,12 @@ import ApiError from "../../../errors/ApiErrors";
 import { Service } from "../service/service.model";
 import { calculatePrice } from "../../../util/calculatePrice";
 import { Booking } from "./booking.model";
-import { IBooking, IBookingStatus, IPaymentStatus } from "./booking.interface";
+import {
+  IBooking,
+  IBookingStatus,
+  IPaymentStatus,
+  IPaymentType,
+} from "./booking.interface";
 import { JwtPayload } from "jsonwebtoken";
 import QueryBuilder from "../../builder/QueryBuilder";
 import stripe from "../../../config/stripe";
@@ -149,14 +154,25 @@ const getCustomerBookings = async (
   query: Record<string, unknown>
 ) => {
   const bookingQuery = new QueryBuilder(
-    Booking.find({ customer: user.id })
-      .select("provider price bookingDate startTime txId")
+    Booking.find({
+      customer: user.id,
+      $or: [
+        {
+          paymentType: IPaymentType.COD,
+        },
+        {
+          paymentType: IPaymentType.ONLINE,
+          paymentStatus: { $ne: IPaymentStatus.PENDING },
+        },
+      ],
+    })
+      .select("provider price bookingDate startTime orderId")
       .populate({
         path: "provider",
         select: "name businessCategory profile location.locationName",
         populate: {
           path: "businessCategory",
-          select: "name",
+          select: "name -_id",
         },
       }),
     query
