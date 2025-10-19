@@ -1,8 +1,8 @@
 import { JwtPayload } from "jsonwebtoken";
-
+import mongoose from "mongoose";
 import { IChat } from "./chat.interface";
 import { Chat } from "./chat.model";
-import { IMessage } from "../message/message.interface";
+
 import { Message } from "../message/message.model";
 import QueryBuilder from "../../builder/QueryBuilder";
 
@@ -28,15 +28,11 @@ const getChatsFromDB = async (
   query: Record<string, unknown>
 ) => {
   const chatsQuery = new QueryBuilder(
-    Chat.find({
-      participants: { $in: [user.id] },
-    })
+    Chat.find({ participants: { $in: [user.id] } })
       .populate({
         path: "participants",
-        select: "name  profile isOnline",
-        match: {
-          _id: { $ne: user.id },
-        },
+        select: "name profile isOnline",
+        match: { _id: { $ne: user.id } },
       })
       .select("participants updatedAt")
       .sort("-updatedAt"),
@@ -48,31 +44,64 @@ const getChatsFromDB = async (
     chatsQuery.getPaginationInfo(),
   ]);
 
-  const chatList = await Promise.all(
-    chats?.map(async (chat) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const chatData: any = chat;
+  if (!chats || chats.length === 0) return { chatList: [], pagination };
 
-      const lastMessage: IMessage | null = await Message.findOne({
-        chat: chat?._id,
-      })
-        .sort({ createdAt: -1 })
-        .select("text -_id");
+  // Ensure ids are ObjectId if your DB stores ObjectIds
+  const chatIds = chats.map((c) =>
+    typeof c._id === "string" ? new mongoose.Types.ObjectId(c._id) : c._id
+  );
 
-      // find unread messages count
-      const unreadCount = await Message.countDocuments({
-        chat: chat?._id,
-        seenBy: { $nin: [user.id] },
-      });
+  const userId =
+    typeof user.id === "string"
+      ? new mongoose.Types.ObjectId(user.id)
+      : user.id;
 
-      return {
-        ...chatData,
-        participants: chatData.participants,
-        unreadCount: unreadCount || 0,
-        lastMessage: lastMessage || null,
-      };
+  const messagesData = await Message.aggregate([
+    { $match: { chat: { $in: chatIds } } },
+    // sort so the newest message per chat comes first
+    { $sort: { chat: 1, createdAt: -1 } },
+    {
+      $group: {
+        _id: "$chat",
+        // first entry now is the newest message because of sort createdAt:-1
+        lastMessage: {
+          $first: {
+            text: "$text",
+          },
+        },
+        unreadCount: {
+          $sum: {
+            // if userId is in seenBy => 0, else => 1
+            $cond: [{ $in: [userId, { $ifNull: ["$seenBy", []] }] }, 0, 1],
+          },
+        },
+      },
+    },
+  ]);
+
+  // map results for O(1) lookup
+  const messageMap = new Map();
+  messagesData.forEach((item) =>
+    messageMap.set(item._id.toString(), {
+      lastMessage: item.lastMessage,
+      unreadCount: item.unreadCount,
     })
   );
+
+  // build chat list
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chatList = chats.map((chat: any) => {
+    const key = chat._id.toString();
+    const msgInfo = messageMap.get(key);
+    return {
+      ...chat,
+      participants: chat.participants,
+      unreadCount: msgInfo?.unreadCount ?? 0,
+      lastMessage: msgInfo?.lastMessage ?? null,
+    };
+  });
+
   return { chatList, pagination };
 };
+
 export const ChatService = { createChatToDB, getChatsFromDB };
