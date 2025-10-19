@@ -20,13 +20,17 @@ const createChat = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMyChats = catchAsync(async (req: Request, res: Response) => {
-  const result = await ChatService.getChatsFromDB(req.user as JwtPayload);
+  const result = await ChatService.getChatsFromDB(
+    req.user as JwtPayload,
+    req.query
+  );
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Chats retrieved successfully",
-    data: result,
+    data: result.chatList,
+    pagination: result.pagination,
   });
 });
 

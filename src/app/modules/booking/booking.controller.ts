@@ -38,11 +38,10 @@ const getSingleBooking = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
-  const result = await BookingServices.updateBookingStatus(
+const completeBooking = catchAsync(async (req: Request, res: Response) => {
+  const result = await BookingServices.completeBooking(
     req.params.id,
-    req.user as JwtPayload,
-    req.body
+    req.user as JwtPayload
   );
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -109,7 +108,7 @@ const getCompletedBookings = catchAsync(async (req: Request, res: Response) => {
 export const BookingController = {
   createBooking,
   getSingleBooking,
-  updateBookingStatus,
+  completeBooking,
   getCustomerBookings,
   getProviderBookings,
   getUpcomingBookings,

@@ -23,7 +23,7 @@ const createMessage = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getChatMessages = catchAsync(async (req: Request, res: Response) => {
-  const messages = await MessageService.getChatMessages(
+  const result = await MessageService.getChatMessages(
     req.params.id,
     req.query,
     req.user as JwtPayload
@@ -32,7 +32,8 @@ const getChatMessages = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
     success: true,
     message: "Message Retrieve Successfully",
-    data: messages,
+    data: result.messages,
+    pagination: result.pagination,
   });
 });
 

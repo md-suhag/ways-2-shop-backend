@@ -38,10 +38,9 @@ router.get(
 
 router.get("/:id", auth(), BookingController.getSingleBooking);
 router.patch(
-  "/:id",
+  "/:id/complete",
   auth(USER_ROLES.CUSTOMER),
-  validateRequest(BookingValidations.updateBookingStatusZodSchema),
-  BookingController.updateBookingStatus
+  BookingController.completeBooking
 );
 
 export const BookingRoutes = router;

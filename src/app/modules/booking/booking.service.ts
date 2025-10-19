@@ -105,11 +105,7 @@ const getSingleBooking = async (id: string) => {
   return booking;
 };
 
-const updateBookingStatus = async (
-  id: string,
-  user: JwtPayload,
-  payload: IBookingStatus
-) => {
+const completeBooking = async (id: string, user: JwtPayload) => {
   const booking = await Booking.findById(id);
 
   if (!booking) {
@@ -126,13 +122,9 @@ const updateBookingStatus = async (
     throw new ApiError(StatusCodes.BAD_REQUEST, "Booking is already completed");
   }
 
-  return await Booking.findByIdAndUpdate(
-    id,
-    { payload },
-    { new: true, runValidators: true }
-  ).lean();
+  //   if(booking.paymentType === "ONLINE"){
+  // };
 };
-
 const getCustomerBookings = async (
   user: JwtPayload,
   query: Record<string, unknown>
@@ -244,7 +236,7 @@ const getCompletedBookings = async (
 export const BookingServices = {
   createBooking,
   getSingleBooking,
-  updateBookingStatus,
+  completeBooking,
   getCustomerBookings,
   getProviderBookings,
   getUpcomingBookings,

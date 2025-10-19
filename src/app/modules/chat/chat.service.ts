@@ -4,6 +4,7 @@ import { IChat } from "./chat.interface";
 import { Chat } from "./chat.model";
 import { IMessage } from "../message/message.interface";
 import { Message } from "../message/message.model";
+import QueryBuilder from "../../builder/QueryBuilder";
 
 const createChatToDB = async (
   user: JwtPayload,
@@ -22,30 +23,41 @@ const createChatToDB = async (
   return result;
 };
 
-const getChatsFromDB = async (user: JwtPayload) => {
-  const chats = await Chat.find({
-    participants: { $in: [user.id] },
-  })
-    .populate({
-      path: "participants",
-      select: "name email profile isOnline",
-      match: {
-        _id: { $ne: user.id },
-      },
+const getChatsFromDB = async (
+  user: JwtPayload,
+  query: Record<string, unknown>
+) => {
+  const chatsQuery = new QueryBuilder(
+    Chat.find({
+      participants: { $in: [user.id] },
     })
-    .select("participants updatedAt")
-    .sort("-updatedAt");
+      .populate({
+        path: "participants",
+        select: "name  profile isOnline",
+        match: {
+          _id: { $ne: user.id },
+        },
+      })
+      .select("participants updatedAt")
+      .sort("-updatedAt"),
+    query
+  ).paginate();
 
-  const chatList: IChat[] = await Promise.all(
+  const [chats, pagination] = await Promise.all([
+    chatsQuery.modelQuery.lean(),
+    chatsQuery.getPaginationInfo(),
+  ]);
+
+  const chatList = await Promise.all(
     chats?.map(async (chat) => {
-      const chatData = chat?.toObject();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const chatData: any = chat;
 
       const lastMessage: IMessage | null = await Message.findOne({
         chat: chat?._id,
       })
         .sort({ createdAt: -1 })
-        .select("text  type sender")
-        .populate("sender", "name  profile");
+        .select("text -_id");
 
       // find unread messages count
       const unreadCount = await Message.countDocuments({
@@ -61,6 +73,6 @@ const getChatsFromDB = async (user: JwtPayload) => {
       };
     })
   );
-  return chatList;
+  return { chatList, pagination };
 };
 export const ChatService = { createChatToDB, getChatsFromDB };

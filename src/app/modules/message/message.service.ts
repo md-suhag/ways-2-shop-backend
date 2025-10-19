@@ -21,6 +21,7 @@ const createMessage = async (payload: IMessage): Promise<IMessage> => {
     io.emit(`getMessage::${payload?.chat}`, result);
   }
 
+  await Chat.findByIdAndUpdate(payload.chat, {});
   return result;
 };
 
@@ -48,7 +49,8 @@ const getChatMessages = async (
   // get messages
   const messageQuery = new QueryBuilder(
     Message.find({ chat: chatId })
-      .populate("sender", "name profile")
+      .select(" -updatedAt -__v")
+      .populate("sender", "profile")
       .sort({ createdAt: -1 })
       .lean(),
     query
