@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { StatusCodes } from "http-status-codes";
 import ApiError from "../../../errors/ApiErrors";
 import { Service } from "../service/service.model";
@@ -8,6 +9,7 @@ import { JwtPayload } from "jsonwebtoken";
 import QueryBuilder from "../../builder/QueryBuilder";
 import stripe from "../../../config/stripe";
 import { generateOrderId } from "../../../util/generateOrderId";
+import { checkTimeSlotAvailability } from "../../../util/checkTimeSlotAvailability";
 
 const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
   const serviceData = await Service.findOne({
@@ -16,6 +18,21 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
   });
   if (!serviceData) {
     throw new ApiError(StatusCodes.NOT_FOUND, "service not found");
+  }
+
+  // 🔍 Check if slot available
+  const isAvailable = await checkTimeSlotAvailability(
+    payload.provider!,
+    payload.bookingDate!,
+    payload.startTime!,
+    payload.endTime!
+  );
+
+  if (!isAvailable) {
+    throw new ApiError(
+      StatusCodes.CONFLICT,
+      "This time slot is already booked! Please choose a different time."
+    );
   }
 
   const bookingPrice = calculatePrice(
