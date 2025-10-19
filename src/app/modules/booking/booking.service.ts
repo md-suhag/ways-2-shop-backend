@@ -106,7 +106,10 @@ const getSingleBooking = async (id: string) => {
 };
 
 const completeBooking = async (id: string, user: JwtPayload) => {
-  const booking = await Booking.findById(id);
+  const booking = await Booking.findById(id).populate(
+    "provider",
+    "stripeAccountId"
+  );
 
   if (!booking) {
     throw new ApiError(StatusCodes.NOT_FOUND, "Booking not found");
@@ -122,9 +125,25 @@ const completeBooking = async (id: string, user: JwtPayload) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Booking is already completed");
   }
 
-  //   if(booking.paymentType === "ONLINE"){
-  // };
+  if (booking.paymentType === "ONLINE") {
+    const transfer = await stripe.transfers.create({
+      amount: booking.price * 100,
+      currency: "usd",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      destination: (booking.provider as any).stripeAccountId,
+      source_transaction: booking.stripePaymentIntentId,
+    });
+
+    booking.status = IBookingStatus.COMPLETED;
+    booking.stripeTransferId = transfer.id;
+    await booking.save();
+  } else {
+    booking.status = IBookingStatus.COMPLETED;
+    booking.paymentStatus = IPaymentStatus.PAID;
+    await booking.save();
+  }
 };
+
 const getCustomerBookings = async (
   user: JwtPayload,
   query: Record<string, unknown>

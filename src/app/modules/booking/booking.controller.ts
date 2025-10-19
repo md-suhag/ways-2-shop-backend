@@ -39,15 +39,11 @@ const getSingleBooking = catchAsync(async (req: Request, res: Response) => {
   });
 });
 const completeBooking = catchAsync(async (req: Request, res: Response) => {
-  const result = await BookingServices.completeBooking(
-    req.params.id,
-    req.user as JwtPayload
-  );
+  await BookingServices.completeBooking(req.params.id, req.user as JwtPayload);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
     message: "Booking status updated successfully",
-    data: result,
   });
 });
 

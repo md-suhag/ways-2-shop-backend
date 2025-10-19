@@ -54,6 +54,7 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     profile: {
       type: String,
+      default: "",
     },
     businessCategory: [{ type: Schema.Types.ObjectId, ref: "Category" }],
     totalJobs: {
