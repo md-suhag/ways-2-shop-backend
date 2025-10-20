@@ -11,16 +11,28 @@ const createMessage = async (payload: IMessage): Promise<IMessage> => {
   const isChatExist = await Chat.findOne({
     _id: payload.chat,
     participants: { $in: [payload.sender] },
-  });
+  }).lean();
   if (!isChatExist) throw new Error("Chat not found");
 
+  // get another participant
+  const anotherParticipant = isChatExist.participants.filter(
+    (participant) => participant.toString() !== payload.sender.toString()
+  )[0];
+
   const result = await Message.create(payload);
+
+  // const messageWithProfile = await Message.findById(result._id)
+  //   .populate("sender", "profile")
+  //   .lean();
 
   const io = global.io;
   if (io) {
     io.emit(`getMessage::${payload?.chat}`, result);
   }
-
+  // emit socket event for chats
+  if (io) {
+    io.emit(`getChatList::${anotherParticipant}`, result);
+  }
   await Chat.findByIdAndUpdate(payload.chat, {});
   return result;
 };
