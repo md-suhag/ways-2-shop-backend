@@ -1,26 +1,27 @@
 import { JwtPayload } from "jsonwebtoken";
 import mongoose from "mongoose";
-import { IChat } from "./chat.interface";
 import { Chat } from "./chat.model";
 
 import { Message } from "../message/message.model";
 import QueryBuilder from "../../builder/QueryBuilder";
+import { User } from "../user/user.model";
 
-const createChatToDB = async (
-  user: JwtPayload,
-  otherParticipantId: string
-): Promise<IChat> => {
+const createChatToDB = async (user: JwtPayload, otherParticipantId: string) => {
   const participants = [user.id, otherParticipantId];
+
+  const anotherParticipant = await User.findById(otherParticipantId).select(
+    "name profile"
+  );
 
   const isExistChat = await Chat.findOne({
     participants: { $all: participants },
-  });
+  }).lean();
   if (isExistChat) {
-    return isExistChat;
+    return { ...isExistChat, anotherParticipant };
   }
 
   const result = await Chat.create({ participants });
-  return result;
+  return { ...result, anotherParticipant };
 };
 
 const getChatsFromDB = async (
