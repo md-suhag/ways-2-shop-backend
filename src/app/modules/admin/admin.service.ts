@@ -191,16 +191,31 @@ const getAllCategories = async (query: Record<string, unknown>) => {
               meta: {
                 $ifNull: [
                   { $arrayElemAt: ["$metadata", 0] },
-                  { total: 0, page, limit },
+                  {
+                    total: 0,
+                    page: { $literal: Number(page) },
+                    limit: { $literal: Number(limit) },
+                  },
                 ],
               },
             },
             in: {
               total: "$$meta.total",
-              page: "$$meta.page",
-              limit: "$$meta.limit",
+              page: { $toInt: "$$meta.page" },
+              limit: { $toInt: "$$meta.limit" },
               totalPages: {
-                $ceil: { $divide: ["$$meta.total", "$$meta.limit"] },
+                $ceil: {
+                  $divide: [
+                    { $toDouble: "$$meta.total" },
+                    {
+                      $cond: {
+                        if: { $eq: [{ $toDouble: "$$meta.limit" }, 0] },
+                        then: 1,
+                        else: { $toDouble: "$$meta.limit" },
+                      },
+                    },
+                  ],
+                },
               },
             },
           },
