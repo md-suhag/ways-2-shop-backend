@@ -16,6 +16,10 @@ import stripe from "../../../config/stripe";
 import { generateOrderId } from "../../../util/generateOrderId";
 import { checkTimeSlotAvailability } from "../../../util/checkTimeSlotAvailability";
 import mongoose from "mongoose";
+import { sendNotifications } from "../../../helpers/notificationsHelper";
+import { NOTIFICATION_TYPE } from "../notification/notification.constants";
+import { User } from "../user/user.model";
+import config from "../../../config";
 
 const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
   const serviceData = await Service.findOne({
@@ -81,6 +85,19 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
     } else {
       // COD booking
       await Booking.create([payload], { session });
+
+      const result = await User.findOne({
+        email: config.super_admin.email,
+      })
+        .select("_id")
+        .lean();
+
+      await sendNotifications({
+        type: NOTIFICATION_TYPE.BOOKING,
+        title: "A new booking created",
+        message: "A new booking created",
+        receiver: result!._id,
+      });
       await session.commitTransaction();
       session.endSession();
 
@@ -142,10 +159,26 @@ const completeBooking = async (id: string, user: JwtPayload) => {
     booking.status = IBookingStatus.COMPLETED;
     booking.stripeTransferId = transfer.id;
     await booking.save();
+
+    sendNotifications({
+      type: NOTIFICATION_TYPE.PAYMENT,
+      title: "Booking Completed",
+      message: `Booking Completed. Order Id : ${booking.orderId}`,
+      receiver: booking.provider,
+      referenceId: booking._id.toString(),
+    });
   } else {
     booking.status = IBookingStatus.COMPLETED;
     booking.paymentStatus = IPaymentStatus.PAID;
     await booking.save();
+
+    sendNotifications({
+      type: NOTIFICATION_TYPE.PAYMENT,
+      title: "Booking Completed",
+      message: `Booking Completed. Order Id : ${booking.orderId}`,
+      receiver: booking.provider,
+      referenceId: booking._id.toString(),
+    });
   }
 };
 

@@ -10,7 +10,9 @@ const getUserNotificationFromDB = async (
   query: FilterQuery<any>
 ) => {
   const notificationQuery = new QueryBuilder(
-    Notification.find({ receiver: user.id }).sort("-createdAt"),
+    Notification.find({ receiver: user.id })
+      .select("type title message isRead createdAt referenceId")
+      .sort("-createdAt"),
     query
   ).paginate();
 
@@ -21,14 +23,17 @@ const getUserNotificationFromDB = async (
   ]);
 
   return {
-    notifications: notifications.map((notification: any) => {
-      return {
-        ...notification,
-        timeAgo: timeAgo(notification.createdAt),
-      };
-    }),
+    data: {
+      notifications: notifications.map((notification: any) => {
+        return {
+          ...notification,
+          timeAgo: timeAgo(notification.createdAt),
+        };
+      }),
+
+      unreadCount,
+    },
     pagination,
-    unreadCount,
   };
 };
 

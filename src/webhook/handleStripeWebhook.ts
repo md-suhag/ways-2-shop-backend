@@ -5,6 +5,8 @@ import Stripe from "stripe";
 import { User } from "../app/modules/user/user.model";
 import { Booking } from "../app/modules/booking/booking.model";
 import { IPaymentStatus } from "../app/modules/booking/booking.interface";
+import { sendNotifications } from "../helpers/notificationsHelper";
+import { NOTIFICATION_TYPE } from "../app/modules/notification/notification.constants";
 
 export const handleStripeWebhook = async (req: Request, res: Response) => {
   let event: Stripe.Event;
@@ -47,6 +49,12 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
       booking.paymentStatus = IPaymentStatus.PAID;
 
       await booking.save();
+      await sendNotifications({
+        title: "Payment Successful!",
+        message: `Payment successful. Order Id: ${booking.orderId}`,
+        type: NOTIFICATION_TYPE.PAYMENT,
+        receiver: booking?.customer,
+      });
     }
   }
 
