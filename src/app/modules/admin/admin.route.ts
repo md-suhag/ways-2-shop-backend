@@ -25,11 +25,15 @@ router.patch(
   validateRequest(AdminValidations.updateUserStatusZodSchema),
   AdminController.updateUserStatus
 );
-router.get("/categories", AdminController.getAllCategories);
+router.get(
+  "/categories",
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  AdminController.getAllCategories
+);
 
 router.get(
   "/packages",
-  auth(USER_ROLES.SUPER_ADMIN),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
   AdminController.getAllPackages
 );
 

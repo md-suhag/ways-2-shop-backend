@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post(
   "/",
-  auth(USER_ROLES.SUPER_ADMIN),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
   validateRequest(PackageValidation.createPackageZodSchema),
   PackageController.createPackage
 );
@@ -19,7 +19,7 @@ router.get("/", PackageController.getAllActivePackages);
 
 router.patch(
   "/:id",
-  auth(USER_ROLES.SUPER_ADMIN),
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
   validateRequest(PackageValidation.updatePackageZodSchema),
   PackageController.updatePackage
 );

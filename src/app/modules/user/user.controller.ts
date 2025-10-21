@@ -21,13 +21,12 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
 // register admin
 const createAdmin = catchAsync(async (req: Request, res: Response) => {
   const { ...userData } = req.body;
-  const result = await UserService.createAdminToDB(userData);
+  await UserService.createAdminToDB(userData);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Admin created successfully",
-    data: result,
   });
 });
 
