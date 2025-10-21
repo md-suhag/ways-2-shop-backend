@@ -5,6 +5,12 @@ import { Subscription } from "../subscription/subscription.model";
 import { User } from "../user/user.model";
 import { Booking } from "../booking/booking.model";
 import { IBookingStatus } from "../booking/booking.interface";
+import {
+  IMonthlyAll,
+  MonthlyCustomers,
+  MonthlyProviders,
+  MonthlyRevenue,
+} from "./analytics.interface";
 
 const getAnalyticsOverview = async (range: string) => {
   const now = new Date();
@@ -118,6 +124,7 @@ const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
   const startMonth = Number(query.startMonth);
   const endYear = Number(query.endYear);
   const endMonth = Number(query.endMonth);
+  const type = (query.type as string)?.toLowerCase() || "all";
 
   if (
     !startYear ||
@@ -135,14 +142,15 @@ const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
     );
   }
 
-  // 1. Build date range
   const startDate = new Date(startYear, startMonth - 1, 1);
   const endDate = new Date(endYear, endMonth, 0, 23, 59, 59, 999);
 
-  //  2. Aggregations
-  const [revenueByMonth, customersByMonth, providersByMonth] =
-    await Promise.all([
-      //  Subscriptions: only active or expired
+  // Dynamic query selection
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const promises: Promise<any>[] = [];
+
+  if (type === "all" || type === "revenue") {
+    promises.push(
       Subscription.aggregate([
         {
           $match: {
@@ -159,9 +167,12 @@ const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
             totalRevenue: { $sum: "$priceAtPurchase" },
           },
         },
-      ]),
+      ])
+    );
+  } else promises.push(Promise.resolve([]));
 
-      //  Customers
+  if (type === "all" || type === "customers") {
+    promises.push(
       User.aggregate([
         {
           $match: {
@@ -178,9 +189,12 @@ const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
             totalCustomers: { $sum: 1 },
           },
         },
-      ]),
+      ])
+    );
+  } else promises.push(Promise.resolve([]));
 
-      //  Providers
+  if (type === "all" || type === "providers") {
+    promises.push(
       User.aggregate([
         {
           $match: {
@@ -197,58 +211,63 @@ const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
             totalProviders: { $sum: 1 },
           },
         },
-      ]),
-    ]);
+      ])
+    );
+  } else promises.push(Promise.resolve([]));
 
-  //  3. Merge data into one object
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const merged: Record<string, any> = {};
+  const [revenueByMonth, customersByMonth, providersByMonth] =
+    await Promise.all(promises);
+
+  const merged: Record<string, IMonthlyAll> = {};
   const makeKey = (y: number, m: number) =>
     `${y}-${String(m).padStart(2, "0")}`;
 
-  for (const r of revenueByMonth) {
-    const key = makeKey(r._id.year, r._id.month);
-    merged[key] = {
-      month: key,
-      revenue: r.totalRevenue,
-      customers: 0,
-      providers: 0,
-    };
-  }
-
-  for (const c of customersByMonth) {
-    const key = makeKey(c._id.year, c._id.month);
-    merged[key] = {
-      ...(merged[key] || {
+  if (type === "all" || type === "revenue") {
+    for (const r of revenueByMonth) {
+      const key = makeKey(r._id.year, r._id.month);
+      merged[key] = {
         month: key,
-        revenue: 0,
+        label: "",
+        revenue: r.totalRevenue,
         customers: 0,
         providers: 0,
-      }),
-      customers: c.totalCustomers,
-    };
+      };
+    }
   }
 
-  for (const p of providersByMonth) {
-    const key = makeKey(p._id.year, p._id.month);
-    merged[key] = {
-      ...(merged[key] || {
-        month: key,
-        revenue: 0,
-        customers: 0,
-        providers: 0,
-      }),
-      providers: p.totalProviders,
-    };
+  if (type === "all" || type === "customers") {
+    for (const c of customersByMonth) {
+      const key = makeKey(c._id.year, c._id.month);
+      merged[key] = {
+        ...(merged[key] || {
+          month: key,
+          label: "",
+          revenue: 0,
+          customers: 0,
+          providers: 0,
+        }),
+        customers: c.totalCustomers,
+      };
+    }
   }
 
-  // 4. Generate months between range (fill with zeros)
-  const months: {
-    month: string;
-    revenue: number;
-    customers: number;
-    providers: number;
-  }[] = [];
+  if (type === "all" || type === "providers") {
+    for (const p of providersByMonth) {
+      const key = makeKey(p._id.year, p._id.month);
+      merged[key] = {
+        ...(merged[key] || {
+          month: key,
+          label: "",
+          revenue: 0,
+          customers: 0,
+          providers: 0,
+        }),
+        providers: p.totalProviders,
+      };
+    }
+  }
+
+  const months: IMonthlyAll[] = [];
   const current = new Date(startYear, startMonth - 1, 1);
 
   while (current <= endDate) {
@@ -258,6 +277,10 @@ const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
 
     months.push({
       month: key,
+      label: new Date(key + "-01").toLocaleString("en-US", {
+        month: "short",
+        year: "numeric",
+      }),
       revenue: merged[key]?.revenue || 0,
       customers: merged[key]?.customers || 0,
       providers: merged[key]?.providers || 0,
@@ -266,16 +289,30 @@ const getMonthlyRevenueUsers = async (query: Record<string, unknown>) => {
     current.setMonth(current.getMonth() + 1);
   }
 
-  //  5. Format for display (Jan 2025, Feb 2025, etc.)
-  const formatted = months.map((item) => ({
-    ...item,
-    label: new Date(item.month + "-01").toLocaleString("en-US", {
-      month: "short",
-      year: "numeric",
-    }),
-  }));
+  //  Return typed result based on query type
+  if (type === "revenue") {
+    return months.map<MonthlyRevenue>((item) => ({
+      month: item.month,
+      label: item.label,
+      revenue: item.revenue,
+    }));
+  }
+  if (type === "customers") {
+    return months.map<MonthlyCustomers>((item) => ({
+      month: item.month,
+      label: item.label,
+      customers: item.customers,
+    }));
+  }
+  if (type === "providers") {
+    return months.map<MonthlyProviders>((item) => ({
+      month: item.month,
+      label: item.label,
+      providers: item.providers,
+    }));
+  }
 
-  return formatted;
+  return months; // default type = all
 };
 
 export const AnalyticsService = {
