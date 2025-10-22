@@ -94,8 +94,8 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
 
       await sendNotifications({
         type: NOTIFICATION_TYPE.BOOKING,
-        title: "A new booking created",
-        message: "A new booking created",
+        title: "New booking created",
+        message: "A new booking has been created successfully.",
         receiver: result!._id,
       });
       await session.commitTransaction();
@@ -225,7 +225,20 @@ const getProviderBookings = async (
   query: Record<string, unknown>
 ) => {
   const bookingQuery = new QueryBuilder(
-    Booking.find({ provider: user.id })
+    Booking.find({
+      provider: user.id,
+      $or: [
+        {
+          paymentType: IPaymentType.COD,
+        },
+        {
+          paymentType: IPaymentType.ONLINE,
+          paymentStatus: {
+            $in: [IPaymentStatus.PAID, IPaymentStatus.TRANSFERRED],
+          },
+        },
+      ],
+    })
       .select("provider bookingDate startTime")
       .populate({
         path: "provider",
@@ -252,6 +265,15 @@ const getUpcomingBookings = async (
     Booking.find({
       provider: user.id,
       startTime: { $gte: now },
+      $or: [
+        {
+          paymentType: IPaymentType.COD,
+        },
+        {
+          paymentType: IPaymentType.ONLINE,
+          paymentStatus: { $ne: IPaymentStatus.PENDING },
+        },
+      ],
     })
       .select("provider startTime")
       .populate({
