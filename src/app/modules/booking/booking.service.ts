@@ -65,6 +65,7 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: bookingPrice * 100,
         currency: "usd",
+        transfer_group: payload.orderId,
         metadata: {
           customerId: user.id.toString(),
           providerId: payload.provider?.toString() || "",
@@ -86,6 +87,9 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
       // COD booking
       await Booking.create([payload], { session });
 
+      await session.commitTransaction();
+      session.endSession();
+
       const result = await User.findOne({
         email: config.super_admin.email,
       })
@@ -95,12 +99,9 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
       await sendNotifications({
         type: NOTIFICATION_TYPE.BOOKING,
         title: "New booking created",
-        message: "A new booking has been created successfully.",
+        message: "A new  booking has been created successfully.",
         receiver: result!._id,
       });
-      await session.commitTransaction();
-      session.endSession();
-
       return null;
     }
   } catch (error) {
@@ -148,20 +149,30 @@ const completeBooking = async (id: string, user: JwtPayload) => {
   }
 
   if (booking.paymentType === "ONLINE") {
-    const transfer = await stripe.transfers.create({
-      amount: booking.price * 100,
-      currency: "usd",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      destination: (booking.provider as any).stripeAccountId,
-      source_transaction: booking.stripePaymentIntentId,
-    });
+    if (booking.paymentStatus !== IPaymentStatus.PAID) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid request");
+    }
 
-    booking.status = IBookingStatus.COMPLETED;
-    booking.stripeTransferId = transfer.id;
-    await booking.save();
+    try {
+      const transfer = await stripe.transfers.create({
+        amount: booking.price * 100,
+        currency: "usd",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        destination: (booking.provider as any).stripeAccountId,
+        source_transaction: booking.stripePaymentIntentId,
+        transfer_group: booking.orderId,
+      });
+
+      booking.status = IBookingStatus.COMPLETED;
+      booking.stripeTransferId = transfer.id;
+      await booking.save();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error: unknown) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Transfer failed");
+    }
 
     await sendNotifications({
-      type: NOTIFICATION_TYPE.PAYMENT,
+      type: NOTIFICATION_TYPE.BOOKING,
       title: "Booking Completed",
       message: `Booking Completed. Order Id : ${booking.orderId}`,
       receiver: booking.provider._id,
@@ -173,7 +184,7 @@ const completeBooking = async (id: string, user: JwtPayload) => {
     await booking.save();
 
     await sendNotifications({
-      type: NOTIFICATION_TYPE.PAYMENT,
+      type: NOTIFICATION_TYPE.BOOKING,
       title: "Booking Completed",
       message: `Booking Completed. Order Id : ${booking.orderId}`,
       receiver: booking.provider._id,

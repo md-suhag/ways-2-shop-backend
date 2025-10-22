@@ -55,6 +55,21 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
         type: NOTIFICATION_TYPE.PAYMENT,
         receiver: booking?.customer,
       });
+      const result = await User.findOne({
+        email: config.super_admin.email,
+      })
+        .select("_id")
+        .lean();
+
+      if (result) {
+        await sendNotifications({
+          type: NOTIFICATION_TYPE.BOOKING,
+          title: "New booking created",
+          message: "A new  booking has been created successfully.",
+
+          receiver: result._id,
+        });
+      }
     }
   }
 
