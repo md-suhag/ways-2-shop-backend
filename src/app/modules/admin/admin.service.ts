@@ -12,6 +12,7 @@ import { Category } from "../category/category.model";
 import { Package } from "../package/package.model";
 import { RecentActivity } from "../recentActivity/recent-activity.model";
 import { RecentActivityType } from "../recentActivity/recent-activity.interface";
+import { Service } from "../service/service.model";
 
 const contactUs = async (payload: IContactUs) => {
   const contactUsTemplate = emailTemplate.contactUs(payload);
@@ -75,6 +76,16 @@ const updateUserStatus = async (id: string, isActive: IsActive) => {
     { new: true, runValidators: true }
   ).lean();
 
+  if (!result) return null;
+
+  if (result.role === USER_ROLES.PROVIDER) {
+    const isServiceActive = isActive === IsActive.ACTIVE;
+
+    await Service.updateOne(
+      { provider: result._id },
+      { $set: { isActive: isServiceActive } }
+    );
+  }
   await RecentActivity.create({
     type: RecentActivityType.USER_STATUS,
     message: `${result?.email} - user status changed to '${isActive}' by admin`,
