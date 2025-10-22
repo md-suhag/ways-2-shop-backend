@@ -15,7 +15,11 @@ router.post(
   validateRequest(ServiceValidations.createServiceZodSchema),
   ServiceController.createService
 );
-router.get("/", ServiceController.getAllService);
+router.get(
+  "/",
+  validateRequest(ServiceValidations.getAllServiceZodSchema),
+  ServiceController.getAllService
+);
 router.get("/:id", auth(), ServiceController.getSingleService);
 router.get("/:id/reviews", ServiceController.getServiceReviews);
 export const ServiceRoutes = router;

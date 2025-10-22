@@ -31,35 +31,17 @@ const createServiceZodSchema = z.object({
   }),
 });
 const getAllServiceZodSchema = z.object({
-  body: z.object({
-    coordinates: z.object({
-      type: z.literal("Point", {
-        errorMap: () => ({
-          message: "Coordinates type must be 'Point'",
-        }),
-      }),
-      coordinates: z
-        .tuple([
-          z
-            .number({
-              required_error: "Longitude is required",
-              invalid_type_error: "Longitude must be a number",
-            })
-            .min(-180)
-            .max(180),
-          z
-            .number({
-              required_error: "Latitude is required",
-              invalid_type_error: "Latitude must be a number",
-            })
-            .min(-90)
-            .max(90),
-        ])
-        .refine(
-          (coords) => coords.length === 2,
-          "Coordinates must be [longitude, latitude]"
-        ),
-    }),
+  query: z.object({
+    latitude: z
+      .string({
+        required_error: "Latitude is required",
+      })
+      .refine((val) => !isNaN(parseFloat(val)), "Latitude must be a number"),
+    longitude: z
+      .string({
+        required_error: "Longitude is required",
+      })
+      .refine((val) => !isNaN(parseFloat(val)), "Longitude must be a number"),
   }),
 });
 

@@ -150,107 +150,117 @@ const createServiceToDB = async (
 // };
 const getAllServiceFromDB = async (payload: any, query: any) => {
   const { page = 1, limit = 10, searchTerm, sort = "-createdAt" } = query;
+  const { coordinates, distance } = payload;
 
-  const skip = (Number(page) - 1) * Number(limit);
-  const matchStage: Record<string, any> = {
-    isActive: true,
+  const maxRadius = 50000; // 50 km cap
+  let results: any[] = [];
+  let totalCount = 0;
+
+  // Helper function to build pipelines
+  const buildPipelines = (dist: number) => {
+    const matchStage: Record<string, any> = { isActive: true };
+
+    // Category filter
+    if (payload?.category) {
+      try {
+        matchStage.categories = {
+          $in: [new mongoose.Types.ObjectId(payload.category)],
+        };
+      } catch {
+        throw new Error("Invalid category ID format");
+      }
+    }
+
+    // Geo filter
+    if (coordinates) {
+      const [lng, lat] = coordinates;
+      matchStage.coordinates = {
+        $geoWithin: {
+          $centerSphere: [[lng, lat], dist / 6378137],
+        },
+      };
+    }
+
+    const basePipeline: any[] = [
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: "users",
+          localField: "provider",
+          foreignField: "_id",
+          as: "provider",
+        },
+      },
+      { $unwind: "$provider" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "categories",
+          foreignField: "_id",
+          as: "categories",
+        },
+      },
+      ...(searchTerm
+        ? [
+            {
+              $match: {
+                $or: [
+                  { description: { $regex: searchTerm, $options: "i" } },
+                  { "categories.name": { $regex: searchTerm, $options: "i" } },
+                ],
+              },
+            },
+          ]
+        : []),
+    ];
+
+    const sortStage: Record<string, 1 | -1> = {};
+    const sortField = sort.replace(/^-/, "");
+    const sortOrder = sort.startsWith("-") ? -1 : 1;
+    if (["avgRating", "totalJobs", "totalReview"].includes(sortField))
+      sortStage[`provider.${sortField}`] = sortOrder;
+    else sortStage[sortField] = sortOrder;
+
+    const paginatedPipeline = [
+      ...basePipeline,
+      { $sort: sortStage },
+      { $skip: (Number(page) - 1) * Number(limit) },
+      { $limit: Number(limit) },
+      {
+        $project: {
+          ratePerHour: 1,
+          provider: {
+            name: 1,
+            profile: 1,
+            avgRating: 1,
+            totalJobs: 1,
+            totalReview: 1,
+            businessCategory: 1,
+          },
+          categories: { name: 1 },
+          createdAt: 1,
+        },
+      },
+    ];
+
+    const countPipeline = [...basePipeline, { $count: "total" }];
+    return { paginatedPipeline, countPipeline };
   };
 
-  //  Category filter
-  if (payload?.category) {
-    try {
-      matchStage.categories = {
-        $in: [new mongoose.Types.ObjectId(payload.category)],
-      };
-    } catch {
-      throw new Error("Invalid category ID format");
+  // Try progressively wider searches: 25km → 50km
+  for (const radius of [distance, maxRadius]) {
+    const { paginatedPipeline, countPipeline } = buildPipelines(radius);
+    const [tempResults, countResult] = await Promise.all([
+      Service.aggregate(paginatedPipeline),
+      Service.aggregate(countPipeline),
+    ]);
+
+    if (tempResults.length > 0 || radius === maxRadius) {
+      results = tempResults;
+      totalCount = countResult[0]?.total || 0;
+      break;
     }
   }
-
-  //  Geo filter
-  if (payload?.coordinates && payload?.distance) {
-    const [lng, lat] = payload.coordinates;
-    matchStage.coordinates = {
-      $geoWithin: {
-        $centerSphere: [[lng, lat], payload.distance / 6378137],
-      },
-    };
-  }
-
-  //  Base pipeline (no pagination yet)
-  const basePipeline: any[] = [
-    { $match: matchStage },
-    {
-      $lookup: {
-        from: "users",
-        localField: "provider",
-        foreignField: "_id",
-        as: "provider",
-      },
-    },
-    { $unwind: "$provider" },
-    {
-      $lookup: {
-        from: "categories",
-        localField: "categories",
-        foreignField: "_id",
-        as: "categories",
-      },
-    },
-    ...(searchTerm
-      ? [
-          {
-            $match: {
-              $or: [
-                { description: { $regex: searchTerm, $options: "i" } },
-                { "categories.name": { $regex: searchTerm, $options: "i" } },
-              ],
-            },
-          },
-        ]
-      : []),
-  ];
-
-  //  Sort stage
-  const sortStage: Record<string, 1 | -1> = {};
-  const sortField = sort.replace(/^-/, "");
-  const sortOrder = sort.startsWith("-") ? -1 : 1;
-  if (["avgRating", "totalJobs", "totalReview"].includes(sortField))
-    sortStage[`provider.${sortField}`] = sortOrder;
-  else sortStage[sortField] = sortOrder;
-
-  // Paginated pipeline
-  const paginatedPipeline = [
-    ...basePipeline,
-    { $sort: sortStage },
-    { $skip: skip },
-    { $limit: Number(limit) },
-    {
-      $project: {
-        ratePerHour: 1,
-        provider: {
-          name: 1,
-          profile: 1,
-          avgRating: 1,
-          totalJobs: 1,
-          totalReview: 1,
-          businessCategory: 1,
-        },
-        categories: { name: 1 },
-        createdAt: 1,
-      },
-    },
-  ];
-
-  //  Count pipeline (same filters but without skip/limit)
-  const countPipeline = [...basePipeline, { $count: "total" }];
-
-  const [results, countResult] = await Promise.all([
-    Service.aggregate(paginatedPipeline),
-    Service.aggregate(countPipeline),
-  ]);
-
-  const totalCount = countResult[0]?.total || 0;
 
   return {
     services: results,

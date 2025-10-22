@@ -96,7 +96,7 @@ const getAllService = catchAsync(async (req: Request, res: Response) => {
   const filterPayload = {
     coordinates:
       latitude && longitude ? [Number(longitude), Number(latitude)] : undefined,
-    distance: distance ? Number(distance) : undefined,
+    distance: distance ? Number(distance) : 25000,
     category,
   };
 
