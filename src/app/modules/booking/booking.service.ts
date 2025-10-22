@@ -160,11 +160,11 @@ const completeBooking = async (id: string, user: JwtPayload) => {
     booking.stripeTransferId = transfer.id;
     await booking.save();
 
-    sendNotifications({
+    await sendNotifications({
       type: NOTIFICATION_TYPE.PAYMENT,
       title: "Booking Completed",
       message: `Booking Completed. Order Id : ${booking.orderId}`,
-      receiver: booking.provider,
+      receiver: booking.provider._id,
       referenceId: booking._id.toString(),
     });
   } else {
@@ -172,11 +172,11 @@ const completeBooking = async (id: string, user: JwtPayload) => {
     booking.paymentStatus = IPaymentStatus.PAID;
     await booking.save();
 
-    sendNotifications({
+    await sendNotifications({
       type: NOTIFICATION_TYPE.PAYMENT,
       title: "Booking Completed",
       message: `Booking Completed. Order Id : ${booking.orderId}`,
-      receiver: booking.provider,
+      receiver: booking.provider._id,
       referenceId: booking._id.toString(),
     });
   }
