@@ -47,7 +47,7 @@ const bookingSchema = new Schema<IBooking, BookingModel>(
     },
     stripePaymentIntentId: { type: String },
     stripeTransferId: { type: String },
-
+    transactionId: { type: String },
     orderId: { type: String, required: true, unique: true },
     price: { type: Number, required: true },
     location: { type: LocationSchema, required: true },

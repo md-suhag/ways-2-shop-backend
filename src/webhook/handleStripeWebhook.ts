@@ -28,30 +28,30 @@ const handleAccountUpdated = async (account: Stripe.Account) => {
   }
 };
 
-const handlePaymentIntentSucceeded = async (
-  paymentIntent: Stripe.PaymentIntent
+const handleCheckoutSessionCompleted = async (
+  session: Stripe.Checkout.Session
 ) => {
-  const orderId = paymentIntent.metadata?.orderId;
-  if (!orderId) {
-    console.warn("Missing orderId in payment intent metadata");
-    return;
+  const orderId = session.metadata?.orderId;
+
+  if (orderId) {
+    const booking = await Booking.findOneAndUpdate(
+      { orderId },
+      {
+        paymentStatus: IPaymentStatus.PAID,
+        stripePaymentIntentId: session.payment_intent,
+        transactionId: session.id,
+      }
+    );
+
+    if (booking) {
+      await sendNotifications({
+        title: "Payment Successful!",
+        message: `Payment successful. Order Id: ${booking.orderId}`,
+        type: NOTIFICATION_TYPE.PAYMENT,
+        receiver: booking.customer,
+      });
+    }
   }
-
-  const booking = await Booking.findOne({ orderId });
-  if (!booking) {
-    console.warn(`No booking found with orderId: ${orderId}`);
-    return;
-  }
-
-  booking.paymentStatus = IPaymentStatus.PAID;
-  await booking.save();
-
-  await sendNotifications({
-    title: "Payment Successful!",
-    message: `Payment successful. Order Id: ${booking.orderId}`,
-    type: NOTIFICATION_TYPE.PAYMENT,
-    receiver: booking.customer,
-  });
 
   const admin = await User.findOne({ email: config.super_admin.email })
     .select("_id")
@@ -66,7 +66,6 @@ const handlePaymentIntentSucceeded = async (
     });
   }
 };
-
 export const handleStripeWebhook = async (req: Request, res: Response) => {
   let event: Stripe.Event;
   const signature = req.headers["stripe-signature"];
@@ -96,9 +95,9 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
         await handleAccountUpdated(event.data.object as Stripe.Account);
         break;
 
-      case "payment_intent.succeeded":
-        await handlePaymentIntentSucceeded(
-          event.data.object as Stripe.PaymentIntent
+      case "checkout.session.completed":
+        await handleCheckoutSessionCompleted(
+          event.data.object as Stripe.Checkout.Session
         );
         break;
 

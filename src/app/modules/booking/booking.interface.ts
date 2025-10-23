@@ -34,6 +34,7 @@ export interface IBooking {
   paymentType: IPaymentType;
   stripePaymentIntentId?: string;
   stripeTransferId?: string;
+  transactionId?: string;
   orderId: string;
   price: number;
   location: ILocation;

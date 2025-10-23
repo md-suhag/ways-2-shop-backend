@@ -27,10 +27,10 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
     isActive: true,
   });
   if (!serviceData) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "service not found");
+    throw new ApiError(StatusCodes.NOT_FOUND, "Service not found");
   }
 
-  //  Check if slot available
+  // Check time slot availability
   const isAvailable = await checkTimeSlotAvailability(
     payload.provider!,
     payload.bookingDate!,
@@ -50,22 +50,33 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
     payload.startTime as unknown as string,
     payload.endTime as unknown as string
   );
+
   payload.customer = user.id;
   payload.price = bookingPrice;
   payload.orderId = generateOrderId();
   payload.paymentStatus = IPaymentStatus.PENDING;
 
-  //  Start transaction session
+  // Start transaction
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     if (payload.paymentType === "ONLINE") {
-      // 1️ Create Stripe PaymentIntent
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: bookingPrice * 100,
-        currency: "usd",
-        transfer_group: payload.orderId,
+      //  Create Stripe Checkout Session
+      const sessionStripe = await stripe.checkout.sessions.create({
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+
+              unit_amount: bookingPrice * 100,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: `${config.frontend_url}/booking-success`,
+        cancel_url: `${config.frontend_url}/booking-failed`,
         metadata: {
           customerId: user.id.toString(),
           providerId: payload.provider?.toString() || "",
@@ -73,24 +84,24 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
         },
       });
 
-      payload.stripePaymentIntentId = paymentIntent.id;
+      //  Save booking with pending payment
+      payload.transactionId = sessionStripe.id;
 
-      // 2️ Create booking within transaction
       await Booking.create([payload], { session });
 
-      // 3️ Commit transaction
       await session.commitTransaction();
       session.endSession();
 
-      return { clientSecret: paymentIntent.client_secret };
+      return { checkoutUrl: sessionStripe.url };
     } else {
-      // COD booking
+      //  COD Booking
       await Booking.create([payload], { session });
 
       await session.commitTransaction();
       session.endSession();
 
-      const result = await User.findOne({
+      // Notify admin
+      const admin = await User.findOne({
         email: config.super_admin.email,
       })
         .select("_id")
@@ -98,14 +109,14 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
 
       await sendNotifications({
         type: NOTIFICATION_TYPE.BOOKING,
-        title: "New booking created",
-        message: "A new  booking has been created successfully.",
-        receiver: result!._id,
+        title: "New Booking Created",
+        message: "A new booking has been created successfully.",
+        receiver: admin!._id,
       });
+
       return null;
     }
   } catch (error) {
-    //  Rollback if anything fails
     await session.abortTransaction();
     session.endSession();
     throw error;
