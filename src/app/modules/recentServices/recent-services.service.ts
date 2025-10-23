@@ -1,3 +1,4 @@
+import { Bookmark } from "../bookmark/bookmark.model";
 import { Service } from "../service/service.model";
 import { IRecentServices } from "./recent-services.interface";
 import { RecentServices } from "./recent-services.model";
@@ -41,7 +42,8 @@ const createRecentServices = async (payload: IRecentServices) => {
 
 // get recent services by user id
 const getUserRecentServices = async (id: string) => {
-  const result = await RecentServices.find({ user: id })
+  // Fetch recent services
+  const recentServices = await RecentServices.find({ user: id })
     .sort({ updatedAt: -1 })
     .populate({
       path: "service",
@@ -59,11 +61,22 @@ const getUserRecentServices = async (id: string) => {
     })
     .limit(10)
     .lean();
-  // send service details only
-  const formatedResult = result.map((item) => item.service);
-  return formatedResult;
-};
 
+  // Get user's bookmarked service IDs
+  const bookmarks = await Bookmark.find({ user: id }).select("service").lean();
+  const favoriteIds = new Set(bookmarks.map((b) => b.service.toString()));
+
+  // Attach isFavorite to each service
+  const formattedResult = recentServices.map((item) => {
+    const service = item.service;
+    return {
+      ...service,
+      isFavorite: favoriteIds.has(service._id.toString()),
+    };
+  });
+
+  return formattedResult;
+};
 export const RecentCompaniesServices = {
   createRecentServices,
   getUserRecentServices,
