@@ -18,7 +18,7 @@ router.post(
 router.get(
   "/",
   auth(),
-  // validateRequest(ServiceValidations.getAllServiceZodSchema),
+  validateRequest(ServiceValidations.getAllServiceZodSchema),
   ServiceController.getAllService
 );
 router.get("/:id", auth(), ServiceController.getSingleService);

@@ -31,18 +31,34 @@ const createServiceZodSchema = z.object({
   }),
 });
 const getAllServiceZodSchema = z.object({
-  query: z.object({
-    latitude: z
-      .string({
-        required_error: "Latitude is required",
-      })
-      .refine((val) => !isNaN(parseFloat(val)), "Latitude must be a number"),
-    longitude: z
-      .string({
-        required_error: "Longitude is required",
-      })
-      .refine((val) => !isNaN(parseFloat(val)), "Longitude must be a number"),
-  }),
+  query: z
+    .object({
+      latitude: z
+        .string()
+        .optional()
+        .refine(
+          (val) => !val || !isNaN(parseFloat(val)),
+          "Latitude must be a number"
+        ),
+      longitude: z
+        .string()
+        .optional()
+        .refine(
+          (val) => !val || !isNaN(parseFloat(val)),
+          "Longitude must be a number"
+        ),
+      distance: z
+        .string()
+        .optional()
+        .refine(
+          (val) => !val || !isNaN(parseFloat(val)),
+          "Distance must be a number"
+        ),
+    })
+    .refine(
+      (data) => (!data.latitude && !data.longitude ? true : !!data.distance),
+      "Distance is required if latitude or longitude is provided"
+    ),
 });
 
 export const ServiceValidations = {
