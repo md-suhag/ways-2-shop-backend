@@ -68,8 +68,10 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
           {
             price_data: {
               currency: "usd",
-
               unit_amount: bookingPrice * 100,
+              product_data: {
+                name: "Service Booking",
+              },
             },
             quantity: 1,
           },
@@ -170,7 +172,7 @@ const completeBooking = async (id: string, user: JwtPayload) => {
         currency: "usd",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         destination: (booking.provider as any).stripeAccountId,
-        source_transaction: booking.stripePaymentIntentId,
+
         transfer_group: booking.orderId,
       });
 
@@ -179,6 +181,7 @@ const completeBooking = async (id: string, user: JwtPayload) => {
       await booking.save();
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error: unknown) {
+      console.log(error);
       throw new ApiError(StatusCodes.BAD_REQUEST, "Transfer failed");
     }
 
@@ -261,9 +264,9 @@ const getProviderBookings = async (
         },
       ],
     })
-      .select("provider bookingDate startTime")
+      .select("customer bookingDate startTime")
       .populate({
-        path: "provider",
+        path: "customer",
         select: "name  profile location.locationName",
       }),
     query
@@ -297,9 +300,9 @@ const getUpcomingBookings = async (
         },
       ],
     })
-      .select("provider startTime")
+      .select("customer startTime")
       .populate({
-        path: "provider",
+        path: "customer",
         select: "name  profile location.locationName",
       }),
     query
@@ -323,9 +326,9 @@ const getCompletedBookings = async (
       provider: user.id,
       status: IBookingStatus.COMPLETED,
     })
-      .select("provider")
+      .select("customer")
       .populate({
-        path: "provider",
+        path: "customer",
         select: "name  profile location.locationName",
       })
       .populate({
