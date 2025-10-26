@@ -20,6 +20,7 @@ import { sendNotifications } from "../../../helpers/notificationsHelper";
 import { NOTIFICATION_TYPE } from "../notification/notification.constants";
 import { User } from "../user/user.model";
 import config from "../../../config";
+import { Wallet } from "../wallet/wallet.model";
 
 const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
   const serviceData = await Service.findOne({
@@ -68,7 +69,7 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
           {
             price_data: {
               currency: "usd",
-              unit_amount: bookingPrice * 100,
+              unit_amount: Math.round(bookingPrice * 100),
               product_data: {
                 name: "Service Booking",
               },
@@ -165,25 +166,11 @@ const completeBooking = async (id: string, user: JwtPayload) => {
     if (booking.paymentStatus !== IPaymentStatus.PAID) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid request");
     }
+    booking.status = IBookingStatus.COMPLETED;
 
-    try {
-      const transfer = await stripe.transfers.create({
-        amount: booking.price * 100,
-        currency: "usd",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        destination: (booking.provider as any).stripeAccountId,
+    await booking.save();
 
-        transfer_group: booking.orderId,
-      });
-
-      booking.status = IBookingStatus.COMPLETED;
-      booking.stripeTransferId = transfer.id;
-      await booking.save();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error: unknown) {
-      console.log(error);
-      throw new ApiError(StatusCodes.BAD_REQUEST, "Transfer failed");
-    }
+    await Wallet.addBalance(booking.provider, booking.netPrice!);
 
     await sendNotifications({
       type: NOTIFICATION_TYPE.BOOKING,

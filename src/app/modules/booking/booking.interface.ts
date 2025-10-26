@@ -37,6 +37,8 @@ export interface IBooking {
   transactionId?: string;
   orderId: string;
   price: number;
+  stripeFee?: number;
+  netPrice?: number;
   location: ILocation;
   images?: string[];
   notes?: string;

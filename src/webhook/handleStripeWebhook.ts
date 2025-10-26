@@ -32,27 +32,27 @@ const handleCheckoutSessionCompleted = async (
   session: Stripe.Checkout.Session
 ) => {
   const orderId = session.metadata?.orderId;
+  if (!orderId) return;
 
-  if (orderId) {
-    const booking = await Booking.findOneAndUpdate(
-      { orderId },
-      {
-        paymentStatus: IPaymentStatus.PAID,
-        stripePaymentIntentId: session.payment_intent,
-        transactionId: session.id,
-      }
-    );
+  const booking = await Booking.findOne({ orderId });
+  if (!booking) return;
 
-    if (booking) {
-      await sendNotifications({
-        title: "Payment Successful!",
-        message: `Payment successful. Order Id: ${booking.orderId}`,
-        type: NOTIFICATION_TYPE.PAYMENT,
-        receiver: booking.customer,
-      });
-    }
-  }
+  const paymentIntentId = session.payment_intent as string;
 
+  booking.paymentStatus = IPaymentStatus.PAID;
+  booking.stripePaymentIntentId = paymentIntentId;
+  booking.transactionId = session.id;
+  await booking.save();
+
+  // Notify customer
+  await sendNotifications({
+    title: "Payment Successful!",
+    message: `Payment successful. Order Id: ${booking.orderId}`,
+    type: NOTIFICATION_TYPE.PAYMENT,
+    receiver: booking.customer,
+  });
+
+  // Notify admin
   const admin = await User.findOne({ email: config.super_admin.email })
     .select("_id")
     .lean();
@@ -66,6 +66,40 @@ const handleCheckoutSessionCompleted = async (
     });
   }
 };
+
+const handleChargeUpdated = async (charge: Stripe.Charge) => {
+  console.log("💰 Charge updated:", charge.id);
+
+  if (!charge.payment_intent) return;
+  const paymentIntentId = charge.payment_intent as string;
+
+  const booking = await Booking.findOne({
+    stripePaymentIntentId: paymentIntentId,
+  });
+  if (!booking) return console.log("Booking not found for charge:", charge.id);
+
+  if (!charge.balance_transaction) {
+    console.log("Charge has no balance_transaction yet");
+    return;
+  }
+
+  // Retrieve finalized fee/net info
+  const balanceTx = await stripe.balanceTransactions.retrieve(
+    charge.balance_transaction as string
+  );
+
+  const stripeFee = balanceTx.fee / 100;
+  const netPrice = balanceTx.net / 100;
+
+  booking.stripeFee = stripeFee;
+  booking.netPrice = netPrice;
+  await booking.save();
+
+  console.log(
+    ` Booking ${booking._id} updated with Stripe fee ${stripeFee} and net ${netPrice}`
+  );
+};
+
 export const handleStripeWebhook = async (req: Request, res: Response) => {
   let event: Stripe.Event;
   const signature = req.headers["stripe-signature"];
@@ -99,6 +133,9 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
         await handleCheckoutSessionCompleted(
           event.data.object as Stripe.Checkout.Session
         );
+        break;
+      case "charge.updated":
+        await handleChargeUpdated(event.data.object as Stripe.Charge);
         break;
 
       default:

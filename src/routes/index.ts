@@ -16,6 +16,7 @@ import { SubscriptionRoutes } from "../app/modules/subscription/subscription.rou
 import { PackageRoutes } from "../app/modules/package/package.routes";
 import { AnalyticsRoutes } from "../app/modules/analytics/analytics.route";
 import { RecentActivityRoutes } from "../app/modules/recentActivity/recent-activity.route";
+import { WalletRoutes } from "../app/modules/wallet/wallet.route";
 
 const router = express.Router();
 
@@ -38,6 +39,7 @@ const apiRoutes = [
   { path: "/packages", route: PackageRoutes },
   { path: "/analytics", route: AnalyticsRoutes },
   { path: "/recent-activities", route: RecentActivityRoutes },
+  { path: "/wallets", route: WalletRoutes },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

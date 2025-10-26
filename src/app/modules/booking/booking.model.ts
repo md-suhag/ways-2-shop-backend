@@ -50,6 +50,8 @@ const bookingSchema = new Schema<IBooking, BookingModel>(
     transactionId: { type: String },
     orderId: { type: String, required: true, unique: true },
     price: { type: Number, required: true },
+    stripeFee: { type: Number, default: 0 },
+    netPrice: { type: Number, default: 0 },
     location: { type: LocationSchema, required: true },
     images: [{ type: String }],
     notes: { type: String, default: "" },
