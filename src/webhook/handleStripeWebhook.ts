@@ -39,10 +39,15 @@ const handleCheckoutSessionCompleted = async (
 
   const paymentIntentId = session.payment_intent as string;
 
-  booking.paymentStatus = IPaymentStatus.PAID;
-  booking.stripePaymentIntentId = paymentIntentId;
-  booking.transactionId = session.id;
-  await booking.save();
+  await Booking.updateOne(
+    { orderId },
+    {
+      paymentStatus: IPaymentStatus.PAID,
+      stripePaymentIntentId: paymentIntentId,
+      transactionId: session.id,
+    },
+    { runValidators: true, upsert: true }
+  );
 
   // Notify customer
   await sendNotifications({
