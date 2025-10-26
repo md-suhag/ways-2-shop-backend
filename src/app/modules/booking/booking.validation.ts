@@ -39,13 +39,14 @@ const createBookingZodSchema = z.object({
         const startTime = new Date(data.startTime);
         const endTime = new Date(data.endTime);
 
-        const isSameDate = (d1: Date, d2: Date) =>
-          d1.getFullYear() === d2.getFullYear() &&
-          d1.getMonth() === d2.getMonth() &&
-          d1.getDate() === d2.getDate();
+        const isSameUTCDate = (d1: Date, d2: Date) =>
+          d1.getUTCFullYear() === d2.getUTCFullYear() &&
+          d1.getUTCMonth() === d2.getUTCMonth() &&
+          d1.getUTCDate() === d2.getUTCDate();
 
         return (
-          isSameDate(bookingDate, startTime) && isSameDate(bookingDate, endTime)
+          isSameUTCDate(bookingDate, startTime) &&
+          isSameUTCDate(bookingDate, endTime)
         );
       },
       {
