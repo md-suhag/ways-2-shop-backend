@@ -3,6 +3,8 @@ import { Server } from "socket.io";
 import { logger } from "../shared/logger";
 import { User } from "../app/modules/user/user.model";
 
+const userSocketIDs = new Map();
+
 const socket = (io: Server) => {
   io.on("connection", (socket) => {
     const userId = socket.handshake.query.userId as string;
@@ -13,6 +15,8 @@ const socket = (io: Server) => {
       socket.disconnect(true);
       return;
     }
+
+    userSocketIDs.set(userId, socket.id);
     // User is now online
     logger.info(colors.blue("A user connected"));
     User.findByIdAndUpdate(userId, { isOnline: true }).catch((err) => {
@@ -22,8 +26,14 @@ const socket = (io: Server) => {
     });
     io.emit("userStatus", { userId, isOnline: true });
 
+    socket.on("typing", ({ isTyping, chatId, participantId }) => {
+      const participantSocket = userSocketIDs.get(participantId);
+      socket.to(participantSocket).emit("typing", { chatId, isTyping });
+    });
+
     //disconnect
     socket.on("disconnect", () => {
+      userSocketIDs.delete(userId);
       logger.info(colors.red("A user disconnect"));
       if (userId) {
         // User is now offline
