@@ -113,16 +113,29 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
     console.error("Missing Stripe signature header");
     return res.status(400).json({ error: "Missing stripe signature header" });
   }
+  const platformSecret = config.stripe.webhookSecret;
+  const connectSecret = config.stripe.connectWebhookSecret;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      signature,
-      config.stripe.webhookSecret as string
-    );
+    try {
+      // Try platform secret first
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        signature,
+        platformSecret as string
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      // Try connected account secret if platform one fails
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        signature,
+        connectSecret as string
+      );
+    }
   } catch (err) {
     console.error(
-      "Webhook signature verification failed:",
+      "❌ Webhook signature verification failed:",
       (err as Error).message
     );
     return res.sendStatus(400);
