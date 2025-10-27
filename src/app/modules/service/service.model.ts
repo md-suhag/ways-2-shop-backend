@@ -34,7 +34,7 @@ const serviceSchema = new Schema<IService, ServiceModel>(
     },
     isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
   },
   {
