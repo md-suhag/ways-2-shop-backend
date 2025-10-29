@@ -9,6 +9,7 @@ import { User } from "../user/user.model";
 import { Review } from "../review/review.model";
 import mongoose from "mongoose";
 import { Bookmark } from "../bookmark/bookmark.model";
+import unlinkFile from "../../../shared/unlinkFile";
 
 // import { FilterQuery } from "mongoose";
 
@@ -18,6 +19,14 @@ const createServiceToDB = async (
 ) => {
   if (!payload.image) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Service image is required");
+  }
+  const isServiceExist = await Service.findOne({ provider: user.id });
+  if (isServiceExist) {
+    unlinkFile(payload.image);
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "You have already created Service"
+    );
   }
   payload.provider = user.id;
 
@@ -299,6 +308,24 @@ const getSingleServiceFromDB = async (id: string, user: JwtPayload) => {
   };
 };
 
+const getMyServiceFromDB = async (user: JwtPayload) => {
+  return await Service.find({
+    provider: user.id,
+  })
+    .select("ratePerHour provider isActive")
+    .populate([
+      {
+        path: "categories",
+        select: "name -_id",
+      },
+      {
+        path: "provider",
+        select: "name profile avgRating totalJobs",
+      },
+    ])
+    .lean();
+};
+
 const getServiceReviewsFromDB = async (id: string) => {
   const reviewQuery = new QueryBuilder(
     Review.find({ service: id })
@@ -320,5 +347,6 @@ export const ServiceService = {
   createServiceToDB,
   getAllServiceFromDB,
   getSingleServiceFromDB,
+  getMyServiceFromDB,
   getServiceReviewsFromDB,
 };

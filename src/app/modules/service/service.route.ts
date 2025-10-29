@@ -21,6 +21,11 @@ router.get(
   validateRequest(ServiceValidations.getAllServiceZodSchema),
   ServiceController.getAllService
 );
+router.get(
+  "/provider",
+  auth(USER_ROLES.PROVIDER),
+  ServiceController.getMyService
+);
 router.get("/:id", auth(), ServiceController.getSingleService);
 router.get("/:id/reviews", ServiceController.getServiceReviews);
 export const ServiceRoutes = router;

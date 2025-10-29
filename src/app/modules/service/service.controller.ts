@@ -131,6 +131,18 @@ const getSingleService = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMyService = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as JwtPayload;
+  const result = await ServiceService.getMyServiceFromDB(user);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Service retrieved successfully",
+    data: result,
+  });
+});
+
 const getServiceReviews = catchAsync(async (req: Request, res: Response) => {
   const result = await ServiceService.getServiceReviewsFromDB(req.params.id);
   sendResponse(res, {
@@ -147,4 +159,5 @@ export const ServiceController = {
   getAllService,
   getSingleService,
   getServiceReviews,
+  getMyService,
 };
