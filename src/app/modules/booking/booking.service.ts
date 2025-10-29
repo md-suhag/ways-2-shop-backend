@@ -143,54 +143,80 @@ const getSingleBooking = async (id: string) => {
 };
 
 const completeBooking = async (id: string, user: JwtPayload) => {
-  const booking = await Booking.findById(id).populate(
-    "provider",
-    "stripeAccountId"
-  );
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (!booking) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Booking not found");
-  }
-  if (booking.customer.toString() !== user.id) {
-    throw new ApiError(
-      StatusCodes.UNAUTHORIZED,
-      "You are not authorized to update this booking"
-    );
-  }
+  try {
+    const booking = await Booking.findById(id)
+      .populate("provider", "stripeAccountId _id")
+      .session(session);
 
-  if (booking.status === IBookingStatus.COMPLETED) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Booking is already completed");
-  }
-
-  if (booking.paymentType === "ONLINE") {
-    if (booking.paymentStatus !== IPaymentStatus.PAID) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid request");
+    if (!booking) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Booking not found");
     }
-    booking.status = IBookingStatus.COMPLETED;
 
-    await booking.save();
+    if (booking.customer.toString() !== user.id) {
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED,
+        "You are not authorized to complete this booking"
+      );
+    }
 
-    await Wallet.addBalance(booking.provider, booking.netPrice!);
+    if (booking.status === IBookingStatus.COMPLETED) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Booking already completed");
+    }
 
+    // Online payment
+    if (booking.paymentType === "ONLINE") {
+      if (booking.paymentStatus !== IPaymentStatus.PAID) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid request");
+      }
+
+      booking.status = IBookingStatus.COMPLETED;
+      await booking.save({ session });
+
+      // Update provider wallet
+      await Wallet.addBalance(booking.provider, booking.netPrice!, session);
+
+      // Increment provider total jobs
+      await User.findByIdAndUpdate(
+        booking.provider._id,
+        { $inc: { totalJobs: 1 } },
+        { session }
+      );
+    }
+
+    // Offline payment (cash)
+    else {
+      booking.status = IBookingStatus.COMPLETED;
+      booking.paymentStatus = IPaymentStatus.PAID;
+      await booking.save({ session });
+
+      await User.findByIdAndUpdate(
+        booking.provider._id,
+        { $inc: { totalJobs: 1 } },
+        { session }
+      );
+    }
+
+    // Commit all updates
+    await session.commitTransaction();
+    session.endSession();
+
+    // Send notification outside of transaction
     await sendNotifications({
       type: NOTIFICATION_TYPE.BOOKING,
       title: "Booking Completed",
-      message: `Booking Completed. Order Id : ${booking.orderId}`,
+      message: `Booking Completed. Order Id: ${booking.orderId}`,
       receiver: booking.provider._id,
       referenceId: booking._id.toString(),
     });
-  } else {
-    booking.status = IBookingStatus.COMPLETED;
-    booking.paymentStatus = IPaymentStatus.PAID;
-    await booking.save();
 
-    await sendNotifications({
-      type: NOTIFICATION_TYPE.BOOKING,
-      title: "Booking Completed",
-      message: `Booking Completed. Order Id : ${booking.orderId}`,
-      receiver: booking.provider._id,
-      referenceId: booking._id.toString(),
-    });
+    return { success: true, message: "Booking completed successfully" };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
 };
 

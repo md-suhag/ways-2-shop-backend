@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model, Types, ClientSession } from "mongoose";
 import { IWallet, WalletModel } from "./wallet.interface";
 
 const walletSchema = new Schema<IWallet, WalletModel>(
@@ -30,7 +30,8 @@ const walletSchema = new Schema<IWallet, WalletModel>(
 // Add balance to wallet
 walletSchema.statics.addBalance = async function (
   providerId: Types.ObjectId,
-  amount: number
+  amount: number,
+  session: ClientSession
 ) {
   return await this.findOneAndUpdate(
     { provider: providerId },
@@ -40,7 +41,7 @@ walletSchema.statics.addBalance = async function (
         totalEarned: amount,
       },
     },
-    { new: true, upsert: true }
+    { new: true, upsert: true, session }
   );
 };
 
