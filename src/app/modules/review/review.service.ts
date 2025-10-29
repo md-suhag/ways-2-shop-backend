@@ -5,6 +5,8 @@ import { User } from "../user/user.model";
 import ApiError from "../../../errors/ApiErrors";
 import { JwtPayload } from "jsonwebtoken";
 import mongoose from "mongoose";
+import { Booking } from "../booking/booking.model";
+import { IBookingStatus } from "../booking/booking.interface";
 
 const createReviewToDB = async (
   payload: IReview,
@@ -17,6 +19,25 @@ const createReviewToDB = async (
     const customer = await User.findById(user.id).session(session);
     if (!customer) {
       throw new ApiError(StatusCodes.NOT_FOUND, "No Customer Found");
+    }
+
+    const booking = await Booking.findById(payload.booking)
+      .select("status customer")
+      .lean()
+      .session(session);
+
+    if (booking?.customer.toString() !== user.id) {
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED,
+        "You cannot review this booking"
+      );
+    }
+
+    if (booking?.status !== IBookingStatus.COMPLETED) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "You can only give review of completed booking"
+      );
     }
 
     const isExistReview = await Review.findOne({
