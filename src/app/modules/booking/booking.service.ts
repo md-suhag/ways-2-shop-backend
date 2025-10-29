@@ -204,13 +204,16 @@ const completeBooking = async (id: string, user: JwtPayload) => {
     session.endSession();
 
     // Send notification outside of transaction
-    await sendNotifications({
-      type: NOTIFICATION_TYPE.BOOKING,
-      title: "Booking Completed",
-      message: `Booking Completed. Order Id: ${booking.orderId}`,
-      receiver: booking.provider._id,
-      referenceId: booking._id.toString(),
-    });
+    await sendNotifications(
+      {
+        type: NOTIFICATION_TYPE.BOOKING,
+        title: "Booking Completed",
+        message: `Booking Completed. Order Id: ${booking.orderId}`,
+        receiver: booking.provider._id,
+        referenceId: booking._id.toString(),
+      },
+      session
+    );
 
     return { success: true, message: "Booking completed successfully" };
   } catch (error) {
