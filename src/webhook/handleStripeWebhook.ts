@@ -72,6 +72,20 @@ const handleCheckoutSessionCompleted = async (
   }
 };
 
+const handleCheckoutSessionExpired = async (
+  session: Stripe.Checkout.Session
+) => {
+  const orderId = session.metadata?.orderId;
+
+  const booking = await Booking.findOne({ orderId })
+    .select("paymentStatus _id")
+    .lean();
+
+  if (booking && booking.paymentStatus !== IPaymentStatus.PAID) {
+    await Booking.findByIdAndDelete(booking._id);
+  }
+};
+
 const handleChargeUpdated = async (charge: Stripe.Charge) => {
   console.log("💰 Charge updated:", charge.id);
 
@@ -149,6 +163,11 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
 
       case "checkout.session.completed":
         await handleCheckoutSessionCompleted(
+          event.data.object as Stripe.Checkout.Session
+        );
+        break;
+      case "checkout.session.expired":
+        await handleCheckoutSessionExpired(
           event.data.object as Stripe.Checkout.Session
         );
         break;
