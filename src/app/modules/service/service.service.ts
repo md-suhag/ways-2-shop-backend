@@ -150,7 +150,7 @@ const createServiceToDB = async (
 // };
 
 const getAllServiceFromDB = async (payload: any, query: any) => {
-  const { page = 1, limit = 10, searchTerm, sort = "-createdAt" } = query;
+  const { page = 1, limit = 10, searchTerm, sort = "-avgRating" } = query;
   const skip = (Number(page) - 1) * Number(limit);
 
   const matchStage: Record<string, any> = { isActive: true };
