@@ -17,6 +17,8 @@ import generateOTP from "../../../util/generateOTP";
 import { ResetToken } from "../resetToken/resetToken.model";
 import { User } from "../user/user.model";
 import { IsActive, IUser } from "../user/user.interface";
+import { USER_ROLES } from "../../../enums/user";
+import { Service } from "../service/service.model";
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -449,6 +451,16 @@ const verifyDeleteOtpFromDB = async (user: JwtPayload, oneTimeCode: number) => {
     isDeleted: true,
     authentication: { oneTimeCode: null, expireAt: null },
   });
+
+  if (isExistUser.role === USER_ROLES.PROVIDER) {
+    await Service.findOneAndUpdate(
+      { provider: isExistUser._id },
+      {
+        $set: { isActive: false },
+      },
+      { runValidators: true }
+    );
+  }
 
   return;
 };
