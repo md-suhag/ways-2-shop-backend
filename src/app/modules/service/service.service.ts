@@ -327,15 +327,21 @@ const getMyServiceFromDB = async (user: JwtPayload) => {
 };
 
 const updateMyServiceToDB = async (data: Partial<IService>, id: string) => {
-  const updatedService = await Service.findByIdAndUpdate(
-    id,
-    {
-      ...data,
-    },
+  const result = await Service.updateOne(
+    { _id: id },
+    { ...data },
     { runValidators: true }
-  ).lean();
-  if (!updatedService) {
-    throw new ApiError(StatusCodes.NOT_MODIFIED, "Service update failed");
+  );
+
+  if (result.matchedCount === 0) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Service not found");
+  }
+
+  if (result.modifiedCount === 0) {
+    throw new ApiError(
+      StatusCodes.NOT_MODIFIED,
+      "No changes were applied to the service"
+    );
   }
 };
 
