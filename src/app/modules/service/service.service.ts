@@ -312,7 +312,7 @@ const getMyServiceFromDB = async (user: JwtPayload) => {
   return await Service.find({
     provider: user.id,
   })
-    .select("ratePerHour image provider isActive")
+    .select("ratePerHour image provider isActive description")
     .populate([
       {
         path: "categories",
@@ -327,13 +327,16 @@ const getMyServiceFromDB = async (user: JwtPayload) => {
 };
 
 const updateMyServiceToDB = async (data: Partial<IService>, id: string) => {
-  await Service.findByIdAndUpdate(
+  const updatedService = await Service.findByIdAndUpdate(
     id,
     {
       ...data,
     },
     { runValidators: true }
   ).lean();
+  if (!updatedService) {
+    throw new ApiError(StatusCodes.NOT_MODIFIED, "Service update failed");
+  }
 };
 
 const getServiceReviewsFromDB = async (id: string) => {
