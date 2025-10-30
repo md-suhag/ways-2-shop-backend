@@ -109,13 +109,37 @@ const createConnectedAccount = async (user: JwtPayload) => {
     throw new ApiError(404, "Provider not found");
   }
 
+  // Case 1: Account already connected and ready
+  if (provider.stripeAccountId && provider.isStripeAccountReady) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Your Stripe account is already connected and ready to use."
+    );
+  }
+
+  // Case 2: Account exists but onboarding not complete → create onboarding link
+  if (provider.stripeAccountId && !provider.isStripeAccountReady) {
+    const accountLink = await stripe.accountLinks.create({
+      account: provider.stripeAccountId,
+      refresh_url: "https://yourapp.com/refresh",
+      return_url: "https://yourapp.com/success",
+      type: "account_onboarding",
+    });
+
+    return {
+      message: "Complete your Stripe account onboarding.",
+      url: accountLink.url,
+    };
+  }
+
+  // Case 3: No Stripe account yet → create new account
   const account = await stripe.accounts.create({
     type: "express",
-    email: provider?.email,
+    email: provider.email,
   });
 
   provider.stripeAccountId = account.id;
-
+  provider.isStripeAccountReady = false;
   await provider.save();
 
   const accountLink = await stripe.accountLinks.create({
@@ -125,8 +149,12 @@ const createConnectedAccount = async (user: JwtPayload) => {
     type: "account_onboarding",
   });
 
-  return { url: accountLink.url };
+  return {
+    message: "New Stripe account created. Complete onboarding.",
+    url: accountLink.url,
+  };
 };
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
