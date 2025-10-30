@@ -312,7 +312,7 @@ const getMyServiceFromDB = async (user: JwtPayload) => {
   return await Service.find({
     provider: user.id,
   })
-    .select("ratePerHour provider isActive")
+    .select("ratePerHour image provider isActive")
     .populate([
       {
         path: "categories",
@@ -320,7 +320,7 @@ const getMyServiceFromDB = async (user: JwtPayload) => {
       },
       {
         path: "provider",
-        select: "name profile avgRating totalJobs",
+        select: "name  avgRating totalJobs",
       },
     ])
     .lean();
