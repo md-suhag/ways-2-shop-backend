@@ -326,6 +326,16 @@ const getMyServiceFromDB = async (user: JwtPayload) => {
     .lean();
 };
 
+const updateMyServiceToDB = async (data: Partial<IService>, id: string) => {
+  await Service.findByIdAndUpdate(
+    id,
+    {
+      ...data,
+    },
+    { runValidators: true }
+  ).lean();
+};
+
 const getServiceReviewsFromDB = async (id: string) => {
   const reviewQuery = new QueryBuilder(
     Review.find({ service: id })
@@ -348,5 +358,6 @@ export const ServiceService = {
   getAllServiceFromDB,
   getSingleServiceFromDB,
   getMyServiceFromDB,
+  updateMyServiceToDB,
   getServiceReviewsFromDB,
 };

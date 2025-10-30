@@ -143,6 +143,26 @@ const getMyService = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updateMyService = catchAsync(async (req: Request, res: Response) => {
+  let image;
+  if (req.files && "image" in req.files && req.files.image[0]) {
+    image = `/images/${req.files.image[0].filename}`;
+  }
+  const data = {
+    image,
+    ...req.body,
+  };
+
+  const serviceId = req.params.id;
+  await ServiceService.updateMyServiceToDB(data, serviceId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Service updated successfully",
+  });
+});
+
 const getServiceReviews = catchAsync(async (req: Request, res: Response) => {
   const result = await ServiceService.getServiceReviewsFromDB(req.params.id);
   sendResponse(res, {
@@ -160,4 +180,5 @@ export const ServiceController = {
   getSingleService,
   getServiceReviews,
   getMyService,
+  updateMyService,
 };

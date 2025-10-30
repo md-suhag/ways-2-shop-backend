@@ -21,10 +21,13 @@ router.get(
   validateRequest(ServiceValidations.getAllServiceZodSchema),
   ServiceController.getAllService
 );
-router.get(
-  "/provider",
+router.get("/me", auth(USER_ROLES.PROVIDER), ServiceController.getMyService);
+router.patch(
+  "/:id",
   auth(USER_ROLES.PROVIDER),
-  ServiceController.getMyService
+  fileUploadHandler(),
+  validateRequest(ServiceValidations.updateServiceZodSchema),
+  ServiceController.updateMyService
 );
 router.get("/:id", auth(), ServiceController.getSingleService);
 router.get("/:id/reviews", ServiceController.getServiceReviews);

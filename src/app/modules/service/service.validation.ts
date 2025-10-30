@@ -61,7 +61,24 @@ const getAllServiceZodSchema = z.object({
     ),
 });
 
+const updateServiceZodSchema = z.object({
+  body: z.object({
+    description: z.string({ message: "description must be text" }).optional(),
+    ratePerHour: z
+      .string()
+      .regex(/^\d+(\.\d{1,2})?$/, {
+        message: "Rate per hour must be a valid number",
+      })
+      .transform((val) => parseFloat(val))
+      .refine((val) => val > 0, {
+        message: "Rate per hour must be greater than 0",
+      })
+      .optional(),
+  }),
+});
+
 export const ServiceValidations = {
   createServiceZodSchema,
   getAllServiceZodSchema,
+  updateServiceZodSchema,
 };
