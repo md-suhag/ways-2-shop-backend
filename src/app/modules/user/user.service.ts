@@ -9,6 +9,7 @@ import { emailHelper } from "../../../helpers/emailHelper";
 import unlinkFile from "../../../shared/unlinkFile";
 import { USER_ROLES } from "../../../enums/user";
 import stripe from "../../../config/stripe";
+import config from "../../../config";
 
 const createAdminToDB = async (payload: Partial<IUser>) => {
   // check admin is exist or not;
@@ -121,8 +122,8 @@ const createConnectedAccount = async (user: JwtPayload) => {
   if (provider.stripeAccountId && !provider.isStripeAccountReady) {
     const accountLink = await stripe.accountLinks.create({
       account: provider.stripeAccountId,
-      refresh_url: "https://yourapp.com/refresh",
-      return_url: "https://yourapp.com/success",
+      refresh_url: `${config.frontend_url}/refresh`,
+      return_url: `${config.frontend_url}/success`,
       type: "account_onboarding",
     });
 
