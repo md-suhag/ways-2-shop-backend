@@ -78,7 +78,7 @@ const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
         ],
         mode: "payment",
         success_url: `${config.frontend_url}/booking-success`,
-        cancel_url: `${config.frontend_url}/booking-failed`,
+        cancel_url: `${config.frontend_url}/booking-failed?session_id={CHECKOUT_SESSION_ID}`,
         metadata: {
           customerId: user.id.toString(),
           providerId: payload.provider?.toString() || "",
