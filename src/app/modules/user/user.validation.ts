@@ -26,25 +26,27 @@ const createUserZodSchema = z.object({
 });
 
 const updateUserProfileZodSchema = z.object({
-  body: z.object({
-    name: z.string().optional(),
-    email: z.string().email().optional(),
-    contact: z.string().optional(),
-    businessCategory: z.array(z.string()).optional(),
+  body: z
+    .object({
+      name: z.string().optional(),
+      email: z.string().email().optional(),
+      contact: z.string().optional(),
+      businessCategory: z.array(z.string()).optional(),
 
-    // location object
-    location: z
-      .object({
-        locationName: z.string().optional(),
-        coordinates: z
-          .object({
-            lat: z.number().optional(),
-            lng: z.number().optional(),
-          })
-          .optional(),
-      })
-      .optional(),
-  }),
+      // location object
+      location: z
+        .object({
+          locationName: z.string().optional(),
+          coordinates: z
+            .object({
+              lat: z.number().optional(),
+              lng: z.number().optional(),
+            })
+            .optional(),
+        })
+        .optional(),
+    })
+    .strict(),
 });
 export const UserValidation = {
   createAdminZodSchema,
