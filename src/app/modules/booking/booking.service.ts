@@ -20,7 +20,6 @@ import { sendNotifications } from "../../../helpers/notificationsHelper";
 import { NOTIFICATION_TYPE } from "../notification/notification.constants";
 import { User } from "../user/user.model";
 import config from "../../../config";
-import { Wallet } from "../wallet/wallet.model";
 
 const createBooking = async (payload: Partial<IBooking>, user: JwtPayload) => {
   const serviceData = await Service.findOne({
@@ -171,12 +170,23 @@ const completeBooking = async (id: string, user: JwtPayload) => {
       if (booking.paymentStatus !== IPaymentStatus.PAID) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid request");
       }
+      if (!booking.netPrice) {
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          "Payment is still being processed, please wait a few seconds"
+        );
+      }
 
+      const transfer = await stripe.transfers.create({
+        amount: booking.netPrice * 100,
+        currency: "usd",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        destination: (booking.provider as any).stripeAccountId,
+      });
+
+      booking.stripeTransferId = transfer.id;
       booking.status = IBookingStatus.COMPLETED;
       await booking.save({ session });
-
-      // Update provider wallet
-      await Wallet.addBalance(booking.provider, booking.netPrice!, session);
 
       // Increment provider total jobs
       await User.findByIdAndUpdate(
